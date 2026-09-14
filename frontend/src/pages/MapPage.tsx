@@ -96,8 +96,8 @@ function CanvasWindStreamlineLayer({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const PARTICLE_COUNT = 380
-    const MAX_TRAIL_LENGTH = 12
+    const PARTICLE_COUNT = 190
+    const MAX_TRAIL_LENGTH = 22
 
     interface Particle {
       x: number
@@ -110,16 +110,16 @@ function CanvasWindStreamlineLayer({
     }
 
     const resetParticle = (w: number, h: number): Particle => {
-      const isBoundary = Math.random() < 0.70
+      const isBoundary = Math.random() < 0.75
       let x = Math.random() * w
       let y = Math.random() * h
 
       if (isBoundary) {
         if (Math.random() < 0.5) {
           x = Math.random() * w
-          y = -10
+          y = -15
         } else {
-          x = -10
+          x = -15
           y = Math.random() * h
         }
       }
@@ -129,9 +129,9 @@ function CanvasWindStreamlineLayer({
       return {
         x,
         y,
-        age: Math.floor(Math.random() * 20),
-        maxAge: 70 + Math.floor(Math.random() * 90),
-        speedMult: 0.85 + Math.random() * 0.45,
+        age: Math.floor(Math.random() * 30),
+        maxAge: 90 + Math.floor(Math.random() * 110),
+        speedMult: 0.80 + Math.random() * 0.40,
         isCorridor,
         trail: [{ x, y }]
       }
@@ -149,23 +149,23 @@ function CanvasWindStreamlineLayer({
     const baseVx = Math.sin(moveAngleRad)
     const baseVy = -Math.cos(moveAngleRad)
 
-    const baseSpeed = Math.max(1.2, windSpeed * 0.55 * animSpeedFactor)
+    const baseSpeed = Math.max(0.7, windSpeed * 0.38 * animSpeedFactor)
 
     const getColor = (speed: number, isCorridor: boolean) => {
-      if (isCorridor) return 'rgba(56, 189, 248, 0.95)' // Vibrant Sky Blue for NW Corridor
-      if (speed < 2) return 'rgba(56, 189, 248, 0.85)'   // Sky Blue
-      if (speed < 4) return 'rgba(34, 211, 238, 0.90)'   // Cyan
-      if (speed < 6) return 'rgba(52, 211, 153, 0.90)'   // Emerald Green
-      if (speed < 8) return 'rgba(251, 191, 36, 0.95)'   // Amber Yellow
-      return 'rgba(248, 113, 113, 0.95)'                 // Coral Red
+      if (isCorridor) return 'rgba(56, 189, 248, 0.75)' // Sophisticated Sky Blue for NW Corridor
+      if (speed < 2) return 'rgba(56, 189, 248, 0.55)'   // Translucent Sky Blue
+      if (speed < 4) return 'rgba(34, 211, 238, 0.65)'   // Cyan
+      if (speed < 6) return 'rgba(52, 211, 153, 0.70)'   // Soft Emerald
+      if (speed < 8) return 'rgba(251, 191, 36, 0.75)'   // Soft Amber
+      return 'rgba(248, 113, 113, 0.80)'                 // Soft Red
     }
 
     const render = () => {
       if (!ctx || !canvas) return
 
-      // Smooth trailing fade effect
+      // Smooth trailing fade effect for silky fluid motion
       ctx.globalCompositeOperation = 'destination-out'
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.07)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       ctx.globalCompositeOperation = 'source-over'
@@ -173,10 +173,10 @@ function CanvasWindStreamlineLayer({
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i]
 
-        // Curvature calculation for atmospheric flow lines
-        const curveOffset = Math.sin((p.age + i) * 0.05) * 0.35
-        const vx = baseVx + (-baseVy * curveOffset * 0.22)
-        const vy = baseVy + (baseVx * curveOffset * 0.22)
+        // Smooth atmospheric fluid curvature offset
+        const curveOffset = Math.sin((p.age + i) * 0.04) * 0.45
+        const vx = baseVx + (-baseVy * curveOffset * 0.20)
+        const vy = baseVy + (baseVx * curveOffset * 0.20)
 
         p.x += vx * baseSpeed * p.speedMult
         p.y += vy * baseSpeed * p.speedMult
@@ -194,20 +194,13 @@ function CanvasWindStreamlineLayer({
             ctx.lineTo(p.trail[t].x, p.trail[t].y)
           }
           ctx.strokeStyle = getColor(windSpeed, p.isCorridor)
-          ctx.lineWidth = p.isCorridor ? 2.6 : 1.8
+          ctx.lineWidth = p.isCorridor ? 1.4 : 1.0
           ctx.lineCap = 'round'
           ctx.lineJoin = 'round'
           ctx.stroke()
-
-          // Glowing particle head dot
-          const head = p.trail[p.trail.length - 1]
-          ctx.beginPath()
-          ctx.arc(head.x, head.y, p.isCorridor ? 2.0 : 1.4, 0, Math.PI * 2)
-          ctx.fillStyle = p.isCorridor ? '#7dd3fc' : '#ffffff'
-          ctx.fill()
         }
 
-        if (p.age >= p.maxAge || p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) {
+        if (p.age >= p.maxAge || p.x < -30 || p.x > canvas.width + 30 || p.y < -30 || p.y > canvas.height + 30) {
           particles[i] = resetParticle(canvas.width, canvas.height)
         }
       }
