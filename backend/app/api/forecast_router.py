@@ -295,8 +295,10 @@ def get_validation_metrics():
             df_target['target'] = df_target['pm25'].shift(-h)
             df_clean = df_target.dropna(subset=feature_cols + ['target']).copy()
             
-            split = int(len(df_clean) * 0.75)
-            test_h = df_clean.iloc[split:]
+            test_h = df_clean[df_clean['timestamp'] >= '2026-01-01']
+            if len(test_h) == 0:
+                split = int(len(df_clean) * 0.75)
+                test_h = df_clean.iloc[split:]
             
             X_test, y_test = test_h[feature_cols], test_h['target']
             y_pred = xgb.predict(X_test)

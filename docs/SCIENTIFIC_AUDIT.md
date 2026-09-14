@@ -181,15 +181,18 @@ The high $R^2$ at $+24\text{h}$ is mathematically genuine due to the **24-hour d
 - **Test Holdout**: 2026-01-01 to 2026-09-14 (6,168 hours)
 
 ### Re-evaluated Horizon Benchmarks (2026 Test Holdout)
-- **+1h Forecast**: XGBoost MAE = **8.91 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.8823}$ (outperforms Persistence MAE 9.85 $\mu\text{g/m}^3$).
-- **+6h Forecast**: XGBoost MAE = **27.95 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.3767}$ (outperforms Persistence MAE 32.92 $\mu\text{g/m}^3$).
-- **+12h Forecast**: XGBoost MAE = **30.34 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.3166}$ (outperforms Persistence MAE 39.56 $\mu\text{g/m}^3$).
-- **+24h Forecast**: XGBoost MAE = **35.53 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.0748}$ (**Winter Season $R^2 = \mathbf{0.4554}$**, MAE = 26.03 $\mu\text{g/m}^3$).
+- **+1h Forecast**: Persistence Baseline achieves $R^2 = \mathbf{0.8937}$ (MAE $9.85 \mu\text{g/m}^3$), while XGBoost achieves lower MAE = **$8.91 \mu\text{g/m}^3$**, $R^2 = \mathbf{0.8823}$, MedAE = **$4.05 \mu\text{g/m}^3$**.
+- **+6h Forecast**: XGBoost MAE = **$27.95 \mu\text{g/m}^3$**, $R^2 = \mathbf{0.3767}$ (substantially outperforms Persistence MAE $32.92 \mu\text{g/m}^3$, $R^2 = 0.2688$).
+- **+12h Forecast**: XGBoost MAE = **$30.34 \mu\text{g/m}^3$**, $R^2 = \mathbf{0.3166}$ (substantially outperforms Persistence MAE $39.56 \mu\text{g/m}^3$, $R^2 = -0.0064$).
+- **+24h Forecast**: Persistence Baseline achieves $R^2 = 0.1447$, while XGBoost achieves MAE = $35.53 \mu\text{g/m}^3$, $R^2 = 0.0748$ (**demonstrating moderate predictive skill ($R^2 = \mathbf{0.4554}$, MAE = $26.03 \mu\text{g/m}^3$) during the Winter Season**).
 - **+48h & +72h Forecasts**: $R^2 < 0$, demonstrating natural physical uncertainty growth without dynamic 3D chemistry propagation.
 
-## 3. Metric Re-qualification Note
+## 3. Data Provenance Clarification
+Air quality historical records represent **Copernicus CAMS European Reanalysis Grid-Point Extractions queried at CPCB station coordinates**, NOT direct CPCB ground sensor telemetry.
+
+## 4. Metric Re-qualification Note
 The previous $R^2 = 0.9082$ is now formally classified as **"Previous Short-Window Prototype Result"**. Multi-year operational benchmarks on 2026 holdout data reflect real physical variability across all seasons.
 
-## 4. Retrospective vs Operational Distinction
+## 5. Retrospective vs Operational Distinction
 - **Retrospective Setup**: Models utilize historical ERA5 reanalysis meteorology and CAMS observations.
 - **Operational Setup**: Live operational deployments require weather input feeds from numerical weather prediction (NWP) model forecasts (e.g. IMD GFS or ECMWF deterministic forecast).
