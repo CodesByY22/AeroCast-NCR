@@ -1,5 +1,6 @@
 import { Bell, ShieldAlert, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { AlertsHistoryData } from '../api/client'
+import { getBadgeStyle } from '../utils/colors'
 
 interface Props {
   alerts: AlertsHistoryData | null
@@ -38,7 +39,7 @@ export default function AlertsPage({ alerts, loading }: Props) {
                 </h3>
               </div>
             </div>
-            <span className="px-3 py-1 rounded-xl text-xs font-bold text-white uppercase" style={{ backgroundColor: active.color }}>
+            <span className="px-3 py-1 rounded-xl text-xs font-extrabold uppercase shadow-sm" style={getBadgeStyle(active.color)}>
               {active.alert_level}
             </span>
           </div>
@@ -62,7 +63,7 @@ export default function AlertsPage({ alerts, loading }: Props) {
             <div key={alt.horizon} className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-cyan-400 uppercase">Horizon {alt.horizon}</span>
-                <span className="px-2.5 py-0.5 rounded text-xs font-bold text-white" style={{ backgroundColor: alt.color }}>
+                <span className="px-2.5 py-0.5 rounded text-xs font-extrabold shadow-sm" style={getBadgeStyle(alt.color)}>
                   {alt.category}
                 </span>
               </div>

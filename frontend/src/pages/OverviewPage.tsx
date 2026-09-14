@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { Cpu, Activity, Wind, Flame, AlertCircle } from 'lucide-react'
 import { ForecastData, DiagnosticData, StubbleRiskData } from '../api/client'
+import { getBadgeStyle } from '../utils/colors'
 
 interface Props {
   forecast: ForecastData | null
@@ -46,9 +47,9 @@ export default function OverviewPage({ forecast, diagnostics, risk, loading }: P
               AeroCast NCR is a lightweight, data-driven prototype inspired by the 400m-resolution WRF-Chem aerosol data assimilation model (*Scientific Reports*, 2021). It uses real observational data fusion (OpenAQ, Open-Meteo, NASA FIRMS) to emit 72-hour AQI forecasts, driver diagnostics, and upwind stubble transport risk.
             </p>
           </div>
-          <div className="text-right bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2 text-xs">
-            <span className="block text-[10px] text-slate-400 uppercase">Sponsor</span>
-            <span className="font-semibold text-slate-200">MoES / NCMRWF</span>
+          <div className="text-right bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2 text-xs font-mono shrink-0">
+            <span className="text-slate-400 block text-[10px]">OPERATIONAL STATUS</span>
+            <span className="text-emerald-400 font-bold">XGBoost Engine Online</span>
           </div>
         </div>
       </div>
@@ -63,7 +64,7 @@ export default function OverviewPage({ forecast, diagnostics, risk, loading }: P
               <span className="text-4xl font-extrabold tracking-tight" style={{ color: currentItem.color }}>
                 {currentItem.aqi}
               </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded text-white" style={{ backgroundColor: currentItem.color }}>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded shadow-sm" style={getBadgeStyle(currentItem.color)}>
                 {currentItem.category}
               </span>
             </div>
@@ -163,7 +164,7 @@ export default function OverviewPage({ forecast, diagnostics, risk, loading }: P
               <AlertCircle className="w-5 h-5 text-amber-400" />
               <span>Current Pollution Risk Summary</span>
             </h3>
-            <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{ backgroundColor: currentItem?.color, color: '#ffffff' }}>
+            <span className="text-xs font-extrabold px-3 py-1 rounded-lg shadow-sm" style={getBadgeStyle(currentItem?.color)}>
               {currentItem?.category.toUpperCase()} RISK
             </span>
           </div>

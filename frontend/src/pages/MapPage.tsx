@@ -25,6 +25,7 @@ import {
   DiagnosticData,
   StubbleRiskData
 } from '../api/client'
+import { getBadgeStyle } from '../utils/colors'
 
 // Delhi NCR Center Coordinates
 const NCR_CENTER: [number, number] = [28.6139, 77.2090]
@@ -537,7 +538,7 @@ export default function MapPage() {
 
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-slate-400 font-medium">CPCB Severity</span>
-                          <span className="font-extrabold px-2.5 py-0.5 rounded-full text-[10px] text-white shadow-md" style={{ backgroundColor: st.color }}>
+                          <span className="font-extrabold px-2.5 py-0.5 rounded-full text-[10px] shadow-md" style={getBadgeStyle(st.color)}>
                             {st.category}
                           </span>
                         </div>
@@ -759,7 +760,7 @@ export default function MapPage() {
                 <div className="text-5xl font-black font-mono tracking-tight" style={{ color: activeStation.color }}>
                   {activeStation.aqi}
                 </div>
-                <span className="inline-block px-3 py-1 rounded text-xs font-bold text-white shadow-lg" style={{ backgroundColor: activeStation.color }}>
+                <span className="inline-block px-3 py-1 rounded text-xs font-extrabold shadow-lg" style={getBadgeStyle(activeStation.color)}>
                   {activeStation.category}
                 </span>
               </div>
