@@ -36,6 +36,15 @@ export interface DiagnosticData {
   explanation_trace: string
 }
 
+export interface RankedRegionItem {
+  region: string
+  fire_count: number
+  total_frp_mw: number
+  distance_km: number
+  wind_alignment: number
+  risk_score: number
+}
+
 export interface StubbleRiskData {
   transport_risk: {
     stubble_transport_risk_score: number
@@ -47,7 +56,9 @@ export interface StubbleRiskData {
     fire_count_200km: number
     engine_type: string
   }
+  ranked_regional_risk?: RankedRegionItem[]
   active_fire_hotspots: Array<{ latitude: number; longitude: number; frp: number; confidence: string; cluster: string }>
+  scientific_notice?: string
 }
 
 export interface StationItem {
@@ -64,10 +75,12 @@ export interface StationItem {
   category: string
   color: string
   type: string
+  horizon?: string
 }
 
 export interface MapStationsData {
   region: string
+  horizon?: string
   station_count: number
   stations: StationItem[]
   disclaimer: string
@@ -145,8 +158,8 @@ export async function fetchStubbleRisk(): Promise<StubbleRiskData> {
   return res.json()
 }
 
-export async function fetchMapStations(): Promise<MapStationsData> {
-  const res = await fetch('/api/map/stations')
+export async function fetchMapStations(horizon: string = '+0h'): Promise<MapStationsData> {
+  const res = await fetch(`/api/map/stations?horizon=${encodeURIComponent(horizon)}`)
   if (!res.ok) throw new Error(`Map API failed: ${res.statusText}`)
   return res.json()
 }

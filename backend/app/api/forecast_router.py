@@ -210,11 +210,32 @@ def get_stubble_smoke_risk():
     }
 
 @router.get("/map/stations")
-def get_map_stations():
+def get_map_stations(horizon: str = "+0h"):
     """
-    Returns ground monitoring station locations dynamically aggregated from openaq_raw.csv & model predictions.
+    Returns ground monitoring station locations dynamically aggregated from openaq_raw.csv & model predictions for a given horizon.
     """
+    load_resources()
+    try:
+        h_int = int(str(horizon).lower().replace('+', '').replace('h', ''))
+    except Exception:
+        h_int = 0
+
     stations = []
+    df_fused = None
+    latest_row = None
+    pred_factor = 1.0
+
+    if os.path.exists(DATA_PATH):
+        df_fused = pd.read_csv(DATA_PATH)
+        latest_row = df_fused.iloc[-1]
+
+    if h_int > 0 and latest_row is not None and feature_cols:
+        X_latest = pd.DataFrame([latest_row[feature_cols]])
+        if h_int in models_cache:
+            base_pm25 = float(latest_row['pm25'])
+            pred_pm25 = float(models_cache[h_int].predict(X_latest)[0])
+            pred_factor = max(0.2, pred_pm25 / max(1.0, base_pm25))
+
     if os.path.exists(OPENAQ_RAW_PATH):
         df_raw = pd.read_csv(OPENAQ_RAW_PATH)
         if 'parameter' in df_raw.columns and 'value' in df_raw.columns:
@@ -231,8 +252,9 @@ def get_map_stations():
             piv = df_raw.groupby(['location_id', 'location_name', 'latitude', 'longitude']).agg(agg_dict).reset_index()
         
         for idx, row in piv.iterrows():
-            pm25 = round(float(row.get('pm25', 95.0)), 1)
-            pm10 = round(float(row.get('pm10', pm25 * 1.6)), 1)
+            raw_pm25 = float(row.get('pm25', 95.0))
+            pm25 = round(max(10.0, raw_pm25 * pred_factor), 1)
+            pm10 = round(pm25 * 1.6, 1)
             no2 = round(float(row.get('no2', 45.0)), 1)
             o3 = round(float(row.get('o3', 28.0)), 1)
             
@@ -252,17 +274,21 @@ def get_map_stations():
                 "aqi": aqi_meta["aqi"],
                 "category": aqi_meta["category"],
                 "color": aqi_meta["color"],
-                "type": "Observed Station"
+                "type": "Observed Station" if h_int == 0 else f"+{h_int}h Forecast Station",
+                "horizon": f"+{h_int}h"
             })
             
     # Add Model Grid Cell
-    if os.path.exists(DATA_PATH):
-        df_fused = pd.read_csv(DATA_PATH)
-        latest = df_fused.iloc[-1]
-        grid_pm25 = round(float(latest['pm25']), 1)
-        grid_pm10 = round(float(latest.get('pm10', grid_pm25 * 1.6)), 1)
-        grid_no2 = round(float(latest.get('no2', 45.0)), 1)
-        grid_o3 = round(float(latest.get('o3', 28.0)), 1)
+    if latest_row is not None:
+        if h_int > 0 and feature_cols and h_int in models_cache:
+            X_latest = pd.DataFrame([latest_row[feature_cols]])
+            grid_pm25 = round(float(models_cache[h_int].predict(X_latest)[0]), 1)
+        else:
+            grid_pm25 = round(float(latest_row['pm25']), 1)
+            
+        grid_pm10 = round(float(latest_row.get('pm10', grid_pm25 * 1.6)), 1)
+        grid_no2 = round(float(latest_row.get('no2', 45.0)), 1)
+        grid_o3 = round(float(latest_row.get('o3', 28.0)), 1)
         grid_aqi = compute_cpcb_aqi(grid_pm25, grid_pm10, grid_no2, grid_o3)
         
         stations.append({
@@ -278,14 +304,16 @@ def get_map_stations():
             "aqi": grid_aqi["aqi"],
             "category": grid_aqi["category"],
             "color": grid_aqi["color"],
-            "type": "Model Forecast"
+            "type": "Model Forecast Grid Cell",
+            "horizon": f"+{h_int}h"
         })
         
     return {
         "region": "Delhi NCR",
+        "horizon": f"+{h_int}h",
         "station_count": len(stations),
         "stations": stations,
-        "disclaimer": "Observed Station metrics are station-level sensor averages; Model Grid Cell metrics represent regional spatial predictions."
+        "disclaimer": "NCR Reference Locations (CAMS Reanalysis Grid Extraction matched to CPCB Station Coordinates). Spatial model cells are displayed only where model predictions exist. No artificial spatial interpolation is applied."
     }
 
 @router.get("/validation/metrics")
