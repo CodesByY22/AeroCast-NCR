@@ -201,12 +201,18 @@ def get_map_stations():
     stations = []
     if os.path.exists(OPENAQ_RAW_PATH):
         df_raw = pd.read_csv(OPENAQ_RAW_PATH)
-        piv = df_raw.pivot_table(
-            index=['location_id', 'location_name', 'latitude', 'longitude'],
-            columns='parameter',
-            values='value',
-            aggfunc='mean'
-        ).reset_index()
+        if 'parameter' in df_raw.columns and 'value' in df_raw.columns:
+            piv = df_raw.pivot_table(
+                index=['location_id', 'location_name', 'latitude', 'longitude'],
+                columns='parameter',
+                values='value',
+                aggfunc='mean'
+            ).reset_index()
+        else:
+            agg_dict = {}
+            for col in ['pm25', 'pm10', 'no2', 'o3']:
+                if col in df_raw.columns: agg_dict[col] = 'mean'
+            piv = df_raw.groupby(['location_id', 'location_name', 'latitude', 'longitude']).agg(agg_dict).reset_index()
         
         for idx, row in piv.iterrows():
             pm25 = round(float(row.get('pm25', 95.0)), 1)

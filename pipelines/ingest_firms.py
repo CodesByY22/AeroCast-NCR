@@ -14,83 +14,66 @@ UPWIND_FIRE_BBOX = {
     "max_lon": 79.0
 }
 
-def fetch_firms_fire_data(days: int = 7):
+def fetch_firms_fire_data():
     """
-    Fetch active biomass fire detections from NASA FIRMS (VIIRS 375m / MODIS).
-    Filters to agricultural stubble burning regions upwind of Delhi NCR.
+    Fetch real active biomass fire detections from NASA FIRMS (VIIRS / MODIS) open satellite feeds.
+    Filters to agricultural stubble burning regions upwind of Delhi NCR (Punjab, Haryana, UP, Rajasthan).
     """
     os.makedirs(RAW_DATA_DIR, exist_ok=True)
-    print(f"[NASA FIRMS Ingestion] Fetching active fire detections for upwind NCR (last {days} days)...")
+    print(f"[NASA FIRMS Ingestion] Fetching real satellite active fire detections for upwind NCR...")
     
-    firms_key = os.getenv("NASA_FIRMS_MAP_KEY", "")
+    urls = [
+        "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-viirs-c2/csv/SUOMI_VIIRS_C2_South_Asia_7d.csv",
+        "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_South_Asia_7d.csv"
+    ]
+    
     records = []
-    
-    if firms_key:
-        url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{firms_key}/VIIRS_SNPP_NRT/{UPWIND_FIRE_BBOX['min_lon']},{UPWIND_FIRE_BBOX['min_lat']},{UPWIND_FIRE_BBOX['max_lon']},{UPWIND_FIRE_BBOX['max_lat']}/{days}"
-        try:
-            with httpx.Client(timeout=20.0) as client:
+    with httpx.Client(timeout=30.0) as client:
+        for url in urls:
+            try:
                 resp = client.get(url)
                 if resp.status_code == 200 and "latitude" in resp.text:
                     import io
-                    df_live = pd.read_csv(io.StringIO(resp.text))
-                    print(f"[NASA FIRMS Ingestion] Fetched {len(df_live)} live fire detections from NASA FIRMS API.")
-                    df_live.to_csv(os.path.join(RAW_DATA_DIR, "firms_raw.csv"), index=False)
-                    return df_live
-        except Exception as e:
-            print(f"[NASA FIRMS Ingestion] Live API fetch exception: {e}")
+                    df_feed = pd.read_csv(io.StringIO(resp.text))
+                    # Filter to upwind fire bounding box (27.5N-32.5N, 74.0E-79.0E)
+                    df_ncr_upwind = df_feed[
+                        (df_feed["latitude"] >= UPWIND_FIRE_BBOX["min_lat"]) &
+                        (df_feed["latitude"] <= UPWIND_FIRE_BBOX["max_lat"]) &
+                        (df_feed["longitude"] >= UPWIND_FIRE_BBOX["min_lon"]) &
+                        (df_feed["longitude"] <= UPWIND_FIRE_BBOX["max_lon"])
+                    ]
+                    print(f"[NASA FIRMS Ingestion] Fetched {len(df_ncr_upwind)} real upwind fire detections from {url.split('/')[-1]}.")
+                    for _, row in df_ncr_upwind.iterrows():
+                        records.append({
+                            "latitude": row.get("latitude"),
+                            "longitude": row.get("longitude"),
+                            "bright_ti4": row.get("bright_ti4", row.get("brightness")),
+                            "acq_date": str(row.get("acq_date")),
+                            "acq_time": f"{int(row.get('acq_time', 0)):04d}",
+                            "satellite": str(row.get("satellite")),
+                            "confidence": str(row.get("confidence")),
+                            "frp": float(row.get("frp", 0.0)),
+                            "daynight": str(row.get("daynight"))
+                        })
+            except Exception as e:
+                print(f"[NASA FIRMS Ingestion] Error fetching {url}: {e}")
 
-    print("[NASA FIRMS Ingestion] Generating validation-grade structured active fire dataset (VIIRS 375m simulation)...")
-    end_date = datetime.now()
-    dates = [end_date - timedelta(days=i) for i in range(days)]
-    
-    # Fire clusters in Punjab (Amritsar, Sangrur, Ludhiana) and Haryana (Karnal, Kurukshetra)
-    fire_clusters = [
-        {"name": "Punjab_Central", "lat": 30.9, "lon": 75.85, "count_range": (30, 120)},
-        {"name": "Punjab_North", "lat": 31.6, "lon": 74.87, "count_range": (20, 90)},
-        {"name": "Haryana_North", "lat": 29.96, "lon": 76.81, "count_range": (15, 65)},
-        {"name": "Western_UP", "lat": 28.98, "lon": 77.70, "count_range": (5, 30)}
-    ]
-    
-    np.random.seed(42)
-    for d in dates:
-        date_str = d.strftime("%Y-%m-%d")
-        for cluster in fire_clusters:
-            num_fires = np.random.randint(cluster["count_range"][0], cluster["count_range"][1])
-            for _ in range(num_fires):
-                lat = cluster["lat"] + np.random.normal(0, 0.25)
-                lon = cluster["lon"] + np.random.normal(0, 0.25)
-                frp = round(float(np.random.exponential(scale=18.5) + 3.0), 2)
-                confidence = np.random.choice(["nominal", "high"], p=[0.7, 0.3])
-                records.append({
-                    "latitude": round(lat, 4),
-                    "longitude": round(lon, 4),
-                    "bright_ti4": round(310 + np.random.normal(0, 15), 1),
-                    "scan": 0.4,
-                    "track": 0.38,
-                    "acq_date": date_str,
-                    "acq_time": f"{np.random.randint(7, 14):02d}{np.random.randint(0, 59):02d}",
-                    "satellite": "N",
-                    "instrument": "VIIRS",
-                    "confidence": confidence,
-                    "version": "2.0NRT",
-                    "bright_ti5": round(290 + np.random.normal(0, 10), 1),
-                    "frp": frp,
-                    "daynight": "D",
-                    "cluster_region": cluster["name"]
-                })
-                
+    if not records:
+        print("[NASA FIRMS Ingestion] Note: Regional satellite feed yielded 0 active fires in 7d window. Creating clean 0-fire schema baseline.")
+        output_file = os.path.join(RAW_DATA_DIR, "firms_raw.csv")
+        pd.DataFrame(columns=["latitude", "longitude", "bright_ti4", "acq_date", "acq_time", "satellite", "confidence", "frp", "daynight"]).to_csv(output_file, index=False)
+        return pd.DataFrame()
+
     df = pd.DataFrame(records)
     output_file = os.path.join(RAW_DATA_DIR, "firms_raw.csv")
     df.to_csv(output_file, index=False)
-    print(f"[NASA FIRMS Ingestion] Saved {len(df)} fire detections to {output_file}")
+    print(f"[NASA FIRMS Ingestion] Saved {len(df)} real fire detections to {output_file}")
     
     # Sanity Check Output
     print("\n--- NASA FIRMS INGESTION SANITY CHECK ---")
     print(f"Total Active Fire Detections: {len(df)}")
     print(f"Acquisition Date Range: {df['acq_date'].min()} to {df['acq_date'].max()}")
-    print(f"Mean FRP (Fire Radiative Power): {df['frp'].mean():.2f} MW, Max FRP: {df['frp'].max():.2f} MW")
-    print(f"Regional Counts:\n{df['cluster_region'].value_counts()}")
-    print(f"Missing Values:\n{df.isnull().sum()}")
+    print(f"Mean FRP: {df['frp'].mean():.2f} MW, Max FRP: {df['frp'].max():.2f} MW")
     print("-----------------------------------------\n")
     return df
 

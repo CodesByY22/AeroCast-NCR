@@ -13,97 +13,89 @@ DELHI_NCR_BBOX = {
 
 RAW_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "raw")
 
-def fetch_openaq_data(days: int = 7):
+def fetch_openaq_data(start_date: str = "2023-01-01", end_date: str = "2026-09-14"):
     """
-    Fetch real-time / recent air pollution measurements for Delhi NCR from OpenAQ API.
-    Falls back to structured historical reanalysis sample if OpenAQ API key/rate limit applies.
+    Fetch real multi-year hourly air quality measurements for 5 Delhi NCR stations from 
+    Open-Meteo CAMS Atmospheric Reanalysis API.
+    Covers PM2.5, PM10, NO2, O3, SO2, CO for 2023-2026 without synthetic generators.
     """
     os.makedirs(RAW_DATA_DIR, exist_ok=True)
-    print(f"[OpenAQ Ingestion] Requesting last {days} days of pollution data for Delhi NCR...")
+    print(f"[Air Quality Ingestion] Fetching real hourly CAMS air quality reanalysis data ({start_date} to {end_date})...")
     
-    # Try fetching OpenAQ API
-    url = "https://api.openaq.org/v2/measurements"
-    params = {
-        "coordinates": f"{28.6139},{77.2090}",
-        "radius": 40000, # 40km radius covering Delhi NCR
-        "limit": 1000,
-        "page": 1,
-        "offset": 0,
-        "sort": "desc",
-        "order_by": "datetime"
-    }
+    stations = [
+        {"id": "del_rk_puram", "name": "RK Puram, Delhi", "lat": 28.56, "lon": 77.17, "city": "Delhi"},
+        {"id": "del_anand_vihar", "name": "Anand Vihar, Delhi", "lat": 28.65, "lon": 77.31, "city": "Delhi"},
+        {"id": "del_punjabi_bagh", "name": "Punjabi Bagh, Delhi", "lat": 28.67, "lon": 77.13, "city": "Delhi"},
+        {"id": "gur_vikas_sadan", "name": "Vikas Sadan, Gurugram", "lat": 28.45, "lon": 77.02, "city": "Gurugram"},
+        {"id": "noi_sec_125", "name": "Sector 125, Noida", "lat": 28.54, "lon": 77.33, "city": "Noida"}
+    ]
     
     records = []
-    try:
-        with httpx.Client(timeout=10.0) as client:
-            resp = client.get(url, params=params)
-            if resp.status_code == 200:
-                data = resp.json()
-                results = data.get("results", [])
-                print(f"[OpenAQ Ingestion] Successfully fetched {len(results)} live measurements from OpenAQ.")
-                for item in results:
-                    records.append({
-                        "timestamp": item.get("date", {}).get("utc"),
-                        "location_id": item.get("locationId"),
-                        "location_name": item.get("location"),
-                        "parameter": item.get("parameter"),
-                        "value": item.get("value"),
-                        "unit": item.get("unit"),
-                        "latitude": item.get("coordinates", {}).get("latitude"),
-                        "longitude": item.get("coordinates", {}).get("longitude")
-                    })
-    except Exception as e:
-        print(f"[OpenAQ Ingestion] Note: Live API call returned: {e}.")
-
-    # If live API returns fewer records or fails due to v2 deprecation/rate limits, build baseline dataset
-    if len(records) < 50:
-        print("[OpenAQ Ingestion] Generating validation-grade structured OpenAQ historical time series for Delhi NCR stations...")
-        end_time = datetime.now()
-        start_time = end_time - timedelta(days=days)
-        timestamps = pd.date_range(start=start_time, end=end_time, freq='h')
-        
-        stations = [
-            {"id": "openaq_del_01", "name": "RK Puram, Delhi", "lat": 28.56, "lon": 77.17},
-            {"id": "openaq_del_02", "name": "Anand Vihar, Delhi", "lat": 28.65, "lon": 77.31},
-            {"id": "openaq_del_03", "name": "Punjabi Bagh, Delhi", "lat": 28.67, "lon": 77.13},
-            {"id": "openaq_gur_01", "name": "Vikas Sadan, Gurugram", "lat": 28.45, "lon": 77.02},
-            {"id": "openaq_noi_01", "name": "Sector 125, Noida", "lat": 28.54, "lon": 77.33}
-        ]
-        
-        import numpy as np
-        np.random.seed(42)
-        
+    url = "https://air-quality-api.open-meteo.com/v1/air-quality"
+    
+    with httpx.Client(timeout=60.0) as client:
         for st in stations:
-            # Base diurnal pollution pattern
-            base_pm25 = 120 + 40 * np.sin(np.pi * (timestamps.hour - 6) / 12) + np.random.normal(0, 15, len(timestamps))
-            base_pm25 = np.clip(base_pm25, 25, 450)
-            
-            base_pm10 = base_pm25 * 1.6 + np.random.normal(0, 20, len(timestamps))
-            base_no2 = 45 + 15 * np.sin(np.pi * (timestamps.hour - 8) / 12) + np.random.normal(0, 5, len(timestamps))
-            base_o3 = 30 + 25 * np.sin(np.pi * (timestamps.hour - 14) / 12) + np.random.normal(0, 5, len(timestamps))
-            
-            for i, ts in enumerate(timestamps):
-                records.extend([
-                    {"timestamp": ts.isoformat(), "location_id": st["id"], "location_name": st["name"], "parameter": "pm25", "value": round(base_pm25[i], 2), "unit": "µg/m³", "latitude": st["lat"], "longitude": st["lon"]},
-                    {"timestamp": ts.isoformat(), "location_id": st["id"], "location_name": st["name"], "parameter": "pm10", "value": round(base_pm10[i], 2), "unit": "µg/m³", "latitude": st["lat"], "longitude": st["lon"]},
-                    {"timestamp": ts.isoformat(), "location_id": st["id"], "location_name": st["name"], "parameter": "no2", "value": round(base_no2[i], 2), "unit": "µg/m³", "latitude": st["lat"], "longitude": st["lon"]},
-                    {"timestamp": ts.isoformat(), "location_id": st["id"], "location_name": st["name"], "parameter": "o3", "value": round(base_o3[i], 2), "unit": "µg/m³", "latitude": st["lat"], "longitude": st["lon"]}
-                ])
+            params = {
+                "latitude": st["lat"],
+                "longitude": st["lon"],
+                "start_date": start_date,
+                "end_date": end_date,
+                "hourly": ["pm2_5", "pm10", "nitrogen_dioxide", "ozone", "sulphur_dioxide", "carbon_monoxide"],
+                "timezone": "Asia/Kolkata"
+            }
+            try:
+                resp = client.get(url, params=params)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    hourly = data.get("hourly", {})
+                    times = hourly.get("time", [])
+                    print(f"[Air Quality Ingestion] {st['name']}: Fetched {len(times)} hourly records.")
+                    
+                    pm25_arr = hourly.get("pm2_5", [])
+                    pm10_arr = hourly.get("pm10", [])
+                    no2_arr = hourly.get("nitrogen_dioxide", [])
+                    o3_arr = hourly.get("ozone", [])
+                    so2_arr = hourly.get("sulphur_dioxide", [])
+                    co_arr = hourly.get("carbon_monoxide", [])
+                    
+                    for i, t in enumerate(times):
+                        records.append({
+                            "timestamp": t,
+                            "location_id": st["id"],
+                            "location_name": st["name"],
+                            "city": st["city"],
+                            "latitude": st["lat"],
+                            "longitude": st["lon"],
+                            "pm25": pm25_arr[i] if i < len(pm25_arr) else None,
+                            "pm10": pm10_arr[i] if i < len(pm10_arr) else None,
+                            "no2": no2_arr[i] if i < len(no2_arr) else None,
+                            "o3": o3_arr[i] if i < len(o3_arr) else None,
+                            "so2": so2_arr[i] if i < len(so2_arr) else None,
+                            "co": co_arr[i] if i < len(co_arr) else None,
+                        })
+                else:
+                    print(f"[Air Quality Ingestion] Failed to fetch data for {st['name']}: HTTP {resp.status_code}")
+            except Exception as e:
+                print(f"[Air Quality Ingestion] Error fetching {st['name']}: {e}")
+
+    if not records:
+        print("[Air Quality Ingestion] ERROR: SOURCE UNAVAILABLE. No real air quality records retrieved.")
+        return pd.DataFrame()
 
     df = pd.DataFrame(records)
     output_file = os.path.join(RAW_DATA_DIR, "openaq_raw.csv")
     df.to_csv(output_file, index=False)
-    print(f"[OpenAQ Ingestion] Saved {len(df)} records to {output_file}")
+    print(f"[Air Quality Ingestion] Saved {len(df)} real historical records to {output_file}")
     
     # Sanity Check Output
-    print("\n--- OPENAQ INGESTION SANITY CHECK ---")
+    print("\n--- AIR QUALITY INGESTION SANITY CHECK ---")
     print(f"Total Rows: {len(df)}")
-    print(f"Unique Stations: {df['location_name'].nunique()}")
-    print(f"Parameters Found: {df['parameter'].unique().tolist()}")
+    print(f"Unique Stations: {df['location_id'].unique().tolist()}")
     print(f"Time Range: {df['timestamp'].min()} to {df['timestamp'].max()}")
+    print(f"Mean PM2.5: {df['pm25'].mean():.2f} µg/m³, Max PM2.5: {df['pm25'].max():.2f} µg/m³")
     print(f"Missing Values:\n{df.isnull().sum()}")
-    print("------------------------------------\n")
+    print("-----------------------------------------\n")
     return df
 
 if __name__ == "__main__":
-    fetch_openaq_data(days=7)
+    fetch_openaq_data()

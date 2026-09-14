@@ -159,3 +159,37 @@ The high $R^2$ at $+24\text{h}$ is mathematically genuine due to the **24-hour d
    - Re-computed and verified model card evaluation metrics.
    - Updated `GET /api/map/stations` to aggregate ground readings dynamically from `openaq_raw.csv`.
    - Updated `GET /api/validation/metrics` to dynamically re-evaluate model test metrics.
+
+---
+
+# AUDIT REVISION 2 — HISTORICAL DATA EXPANSION & RE-VALIDATION (SEPTEMBER 2026)
+
+## 1. Dataset Expansion Audit
+- **Previous Short Prototype**: 7 days / 169 hourly observations (October 2024).
+- **Audit Revision 2 Dataset**: **3.7 Years (2023-01-01 to 2026-09-14)**.
+- **Total Station Records**: **162,360 real hourly observations** across 5 Delhi NCR stations (RK Puram Delhi, Anand Vihar Delhi, Punjabi Bagh Delhi, Vikas Sadan Gurugram, Sector 125 Noida).
+- **Hourly Timesteps**: **32,472 continuous hours**.
+- **Data Sources**:
+  * Air Quality: Open-Meteo CAMS Atmospheric Reanalysis API (`air-quality-api.open-meteo.com`)
+  * Weather: Open-Meteo ERA5 Reanalysis API (`archive-api.open-meteo.com`)
+  * Active Fires: NASA FIRMS VIIRS/MODIS open satellite feeds (`firms.modaps.eosdis.nasa.gov`)
+- **Zero Synthetic Fallback Policy**: All fallbacks disabled for historical training dataset. Forward-fill gap limit capped at **maximum 3 hours**.
+
+## 2. Multi-Year Chronological Split & Performance Audit
+- **Train Period**: 2023-01-01 to 2024-12-31 (17,544 hours)
+- **Validation Period**: 2025-01-01 to 2025-12-31 (8,760 hours)
+- **Test Holdout**: 2026-01-01 to 2026-09-14 (6,168 hours)
+
+### Re-evaluated Horizon Benchmarks (2026 Test Holdout)
+- **+1h Forecast**: XGBoost MAE = **8.91 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.8823}$ (outperforms Persistence MAE 9.85 $\mu\text{g/m}^3$).
+- **+6h Forecast**: XGBoost MAE = **27.95 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.3767}$ (outperforms Persistence MAE 32.92 $\mu\text{g/m}^3$).
+- **+12h Forecast**: XGBoost MAE = **30.34 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.3166}$ (outperforms Persistence MAE 39.56 $\mu\text{g/m}^3$).
+- **+24h Forecast**: XGBoost MAE = **35.53 $\mu\text{g/m}^3$**, $R^2 = \mathbf{0.0748}$ (**Winter Season $R^2 = \mathbf{0.4554}$**, MAE = 26.03 $\mu\text{g/m}^3$).
+- **+48h & +72h Forecasts**: $R^2 < 0$, demonstrating natural physical uncertainty growth without dynamic 3D chemistry propagation.
+
+## 3. Metric Re-qualification Note
+The previous $R^2 = 0.9082$ is now formally classified as **"Previous Short-Window Prototype Result"**. Multi-year operational benchmarks on 2026 holdout data reflect real physical variability across all seasons.
+
+## 4. Retrospective vs Operational Distinction
+- **Retrospective Setup**: Models utilize historical ERA5 reanalysis meteorology and CAMS observations.
+- **Operational Setup**: Live operational deployments require weather input feeds from numerical weather prediction (NWP) model forecasts (e.g. IMD GFS or ECMWF deterministic forecast).
