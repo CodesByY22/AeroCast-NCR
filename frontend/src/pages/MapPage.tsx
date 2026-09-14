@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -14,7 +14,8 @@ import {
   Clock,
   Navigation,
   CheckSquare,
-  Square
+  Square,
+  Gauge
 } from 'lucide-react'
 import {
   fetchMapStations,
@@ -35,6 +36,186 @@ function MapController({ center, zoom }: { center: [number, number]; zoom: numbe
   useEffect(() => {
     map.setView(center, zoom, { animate: true })
   }, [center, zoom, map])
+  return null
+}
+
+// Canvas-Based Real Weather Streamline Particle Layer
+interface CanvasWindProps {
+  active: boolean
+  windSpeed: number
+  windDirDeg: number
+  animSpeedFactor: number
+  isSmokeTransportActive: boolean
+}
+
+function CanvasWindStreamlineLayer({
+  active,
+  windSpeed,
+  windDirDeg,
+  animSpeedFactor,
+  isSmokeTransportActive
+}: CanvasWindProps) {
+  const map = useMap()
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const animFrameRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const container = map.getContainer()
+    let canvas = canvasRef.current
+
+    if (!active) {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      if (canvas && canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas)
+        canvasRef.current = null
+      }
+      return
+    }
+
+    if (!canvas) {
+      canvas = document.createElement('canvas')
+      canvas.style.position = 'absolute'
+      canvas.style.top = '0'
+      canvas.style.left = '0'
+      canvas.style.width = '100%'
+      canvas.style.height = '100%'
+      canvas.style.pointerEvents = 'none'
+      canvas.style.zIndex = '350'
+      container.appendChild(canvas)
+      canvasRef.current = canvas
+    }
+
+    const updateSize = () => {
+      if (!canvas) return
+      const size = map.getSize()
+      canvas.width = size.x
+      canvas.height = size.y
+    }
+    updateSize()
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const PARTICLE_COUNT = 220
+    interface Particle {
+      x: number
+      y: number
+      age: number
+      maxAge: number
+      speedMult: number
+      isCorridor: boolean
+    }
+
+    const resetParticle = (w: number, h: number): Particle => {
+      const isBoundary = Math.random() < 0.65
+      let x = Math.random() * w
+      let y = Math.random() * h
+
+      if (isBoundary) {
+        if (Math.random() < 0.5) {
+          x = Math.random() * (w * 0.8)
+          y = -5
+        } else {
+          x = -5
+          y = Math.random() * (h * 0.8)
+        }
+      }
+
+      const isCorridor = isSmokeTransportActive && (x < w * 0.65 && y < h * 0.65)
+
+      return {
+        x,
+        y,
+        age: Math.floor(Math.random() * 30),
+        maxAge: 70 + Math.floor(Math.random() * 90),
+        speedMult: 0.75 + Math.random() * 0.5,
+        isCorridor
+      }
+    }
+
+    const particles: Particle[] = []
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push(resetParticle(canvas.width, canvas.height))
+    }
+
+    // Direction calculation:
+    // windDirDeg is direction wind comes FROM.
+    // Particle movement direction is (windDirDeg + 180) degrees.
+    const moveAngleRad = ((windDirDeg + 180) % 360) * (Math.PI / 180)
+    const baseVx = Math.sin(moveAngleRad)
+    const baseVy = -Math.cos(moveAngleRad)
+
+    const baseSpeed = Math.max(0.6, windSpeed * 0.45 * animSpeedFactor)
+
+    const getColor = (speed: number, isCorridor: boolean) => {
+      if (isCorridor) return 'rgba(56, 189, 248, 0.95)' // Bright Sky Blue for NW Corridor
+      if (speed < 2) return 'rgba(2, 132, 199, 0.65)'   // Cool Blue
+      if (speed < 4) return 'rgba(6, 182, 212, 0.75)'   // Cyan
+      if (speed < 6) return 'rgba(16, 185, 129, 0.80)'  // Emerald
+      if (speed < 8) return 'rgba(245, 158, 11, 0.85)'  // Amber
+      return 'rgba(239, 68, 68, 0.90)'                   // Red
+    }
+
+    const render = () => {
+      if (!ctx || !canvas) return
+
+      // Smooth trailing fade effect
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.10)'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      ctx.globalCompositeOperation = 'source-over'
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i]
+        ctx.beginPath()
+        ctx.moveTo(p.x, p.y)
+
+        // Perpendicular wave curve for natural atmospheric flow curvature
+        const curveOffset = Math.sin((p.age + i) * 0.06) * 0.35
+        const vx = baseVx + (-baseVy * curveOffset * 0.25)
+        const vy = baseVy + (baseVx * curveOffset * 0.25)
+
+        p.x += vx * baseSpeed * p.speedMult
+        p.y += vy * baseSpeed * p.speedMult
+        p.age++
+
+        ctx.lineTo(p.x, p.y)
+        ctx.strokeStyle = getColor(windSpeed, p.isCorridor)
+        ctx.lineWidth = p.isCorridor ? 2.2 : 1.4
+        ctx.lineCap = 'round'
+        ctx.stroke()
+
+        if (p.age >= p.maxAge || p.x < -15 || p.x > canvas.width + 15 || p.y < -15 || p.y > canvas.height + 15) {
+          const np = resetParticle(canvas.width, canvas.height)
+          p.x = np.x
+          p.y = np.y
+          p.age = np.age
+          p.maxAge = np.maxAge
+          p.isCorridor = np.isCorridor
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(render)
+    }
+
+    const handleMapResize = () => {
+      updateSize()
+    }
+
+    map.on('move zoom resize', handleMapResize)
+    animFrameRef.current = requestAnimationFrame(render)
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      map.off('move zoom resize', handleMapResize)
+      if (canvas && canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas)
+        canvasRef.current = null
+      }
+    }
+  }, [active, windSpeed, windDirDeg, animSpeedFactor, isSmokeTransportActive, map])
+
   return null
 }
 
@@ -73,49 +254,6 @@ const createFireIcon = (frp: number) => {
   })
 }
 
-const WIND_NODES: Array<{ name: string; lat: number; lon: number }> = [
-  { name: 'Central NCR', lat: 28.6139, lon: 77.2090 },
-  { name: 'NW Stubble Corridor', lat: 28.8500, lon: 76.8800 },
-  { name: 'North Corridor', lat: 28.9500, lon: 77.1000 },
-  { name: 'West Sector', lat: 28.4500, lon: 76.9200 },
-  { name: 'East Sector', lat: 28.5800, lon: 77.3800 },
-  { name: 'South Sector', lat: 28.3500, lon: 77.3100 }
-]
-
-const createWindIcon = (windDirDeg: number, windSpeed: number, sectorLabel: string = '') => {
-  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-  const dirIdx = Math.round(((windDirDeg % 360) + 360) % 360 / 45) % 8
-  const cardinalText = directions[dirIdx]
-
-  return L.divIcon({
-    className: 'custom-wind-node-icon',
-    html: `
-      <div class="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-950/95 border-2 border-cyan-400 text-cyan-200 shadow-2xl shadow-cyan-950/90 cursor-pointer backdrop-blur custom-wind-node">
-        <div style="transform: rotate(${windDirDeg}deg);" class="transition-transform duration-700 flex items-center justify-center">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L19 21L12 17L5 21L12 2Z" fill="url(#windGrad)" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M12 5V16" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3 2" class="wind-stream-line"/>
-            <defs>
-              <linearGradient id="windGrad" x1="12" y1="2" x2="12" y2="21" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#06b6d4"/>
-                <stop offset="1" stop-color="#10b981"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div class="flex items-center space-x-1 mt-1 px-2 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-700/80 font-mono text-[10px] font-extrabold text-cyan-300">
-          <span>${cardinalText}</span>
-          <span class="text-slate-500">·</span>
-          <span class="text-slate-100">${windSpeed} m/s</span>
-        </div>
-        ${sectorLabel ? `<span class="text-[9px] font-extrabold text-slate-400 mt-0.5 uppercase tracking-wider font-mono">${sectorLabel}</span>` : ''}
-      </div>
-    `,
-    iconSize: [68, 68],
-    iconAnchor: [34, 34]
-  })
-}
-
 export default function MapPage() {
   const [stationData, setStationData] = useState<MapStationsData | null>(null)
   const [diagnosticData, setDiagnosticData] = useState<DiagnosticData | null>(null)
@@ -128,12 +266,13 @@ export default function MapPage() {
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number]>(NCR_CENTER)
   const [mapZoom, setMapZoom] = useState<number>(DEFAULT_ZOOM)
+  const [animSpeedFactor, setAnimSpeedFactor] = useState<number>(1.0)
 
   // Layer Toggles
   const [layers, setLayers] = useState({
     airQuality: true,
     forecastMode: true,
-    atmosphericFlow: false,
+    atmosphericFlow: true,
     fireActivity: false,
     smokeTransport: true
   })
@@ -176,7 +315,7 @@ export default function MapPage() {
     setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }))
   }
 
-  const windSpd = diagnosticData?.meteorological_drivers.wind_speed_10m.value ?? 1.8
+  const windSpd = diagnosticData?.meteorological_drivers.wind_speed_10m.value ?? 6.0
   const windDir = diagnosticData?.meteorological_drivers.wind_direction_10m.value ?? 315
 
   return (
@@ -255,7 +394,7 @@ export default function MapPage() {
         <div>
           <strong className="text-slate-100 font-bold block text-sm mb-0.5">Scientific Integrity & Data Provenance Notice:</strong>
           <span>
-            Observed/reanalysis locations show point data (CAMS Reanalysis extractions matched to CPCB station coordinates). Spatial model cells are displayed only where model predictions exist. <strong>No artificial spatial interpolation, fake kriging, or synthetic heatmaps are applied.</strong>
+            Observed/reanalysis locations show point data (CAMS Reanalysis extractions matched to CPCB station coordinates). Wind flow derived from 10m meteorological wind vectors. Streamlines visualize the available meteorological field; they are not direct observations at every displayed pixel. <strong>No artificial spatial interpolation, fake kriging, or synthetic heatmaps are applied.</strong>
           </span>
         </div>
       </div>
@@ -359,48 +498,14 @@ export default function MapPage() {
                 )
               })}
 
-              {/* Layer 2: Atmospheric Wind Vector Spatial Field */}
-              {layers.atmosphericFlow && WIND_NODES.map((node, idx) => (
-                <Marker
-                  key={`wind_node_${idx}`}
-                  position={[node.lat, node.lon]}
-                  icon={createWindIcon(windDir, windSpd, node.name)}
-                >
-                  <Popup className="custom-leaflet-popup" closeButton={false}>
-                    <div className="p-3.5 space-y-2 text-xs font-sans min-w-[220px]">
-                      <div className="font-bold text-sm text-cyan-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                        <span className="flex items-center gap-1.5"><Wind className="w-4 h-4" /> {node.name} Flow Vector</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
-                          Node #{idx + 1}
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-mono">
-                        <span className="text-slate-400">Wind Direction:</span>
-                        <span className="font-bold text-slate-100">{windDir}° (NW → SE)</span>
-                      </div>
-                      <div className="flex justify-between font-mono">
-                        <span className="text-slate-400">Surface Speed:</span>
-                        <span className="font-bold text-cyan-300">{windSpd} m/s</span>
-                      </div>
-                      <div className="flex justify-between font-mono">
-                        <span className="text-slate-400">Ventilation ($V_c$):</span>
-                        <span className="font-bold text-amber-400">
-                          {diagnosticData?.diagnostics.ventilation.ventilation_index_proxy ?? 1800} m²/s
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-mono">
-                        <span className="text-slate-400">PBL Height Proxy:</span>
-                        <span className="font-bold text-sky-400">
-                          {diagnosticData?.meteorological_drivers.pbl_height_proxy.value ?? 450} m
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 italic pt-1 border-t border-slate-800/80 font-mono">
-                        {diagnosticData?.diagnostics.ventilation.status ?? 'Weak Ventilation'}
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+              {/* Layer 2: Canvas-Based Real Weather Streamline Particle Layer */}
+              <CanvasWindStreamlineLayer
+                active={layers.atmosphericFlow}
+                windSpeed={windSpd}
+                windDirDeg={windDir}
+                animSpeedFactor={animSpeedFactor}
+                isSmokeTransportActive={layers.smokeTransport}
+              />
 
               {/* Layer 3: Satellite Fire Hotspots (NASA FIRMS) */}
               {layers.fireActivity && stubbleData?.active_fire_hotspots.map((fire, idx) => (
@@ -410,23 +515,23 @@ export default function MapPage() {
                   icon={createFireIcon(fire.frp)}
                 >
                   <Popup>
-                    <div className="p-3 bg-slate-900 text-slate-100 rounded-xl space-y-1.5 text-xs font-sans min-w-[190px]">
+                    <div className="p-3.5 bg-slate-900 text-slate-100 rounded-xl space-y-1.5 text-xs font-sans min-w-[190px]">
                       <div className="font-bold text-sm text-rose-400 flex items-center gap-1.5 border-b border-slate-800 pb-1">
                         <Flame className="w-4 h-4" /> Satellite Fire Spot
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-mono">
                         <span className="text-slate-400">Region:</span>
                         <span className="font-bold text-slate-100">{fire.cluster}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-mono">
                         <span className="text-slate-400">Fire Power (FRP):</span>
                         <span className="font-bold text-rose-400">{fire.frp} MW</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-mono">
                         <span className="text-slate-400">Confidence:</span>
                         <span className="font-bold text-emerald-400">{fire.confidence}</span>
                       </div>
-                      <div className="text-[10px] text-slate-500 font-mono pt-1">
+                      <div className="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-800">
                         {fire.latitude.toFixed(4)}°N, {fire.longitude.toFixed(4)}°E
                       </div>
                     </div>
@@ -436,21 +541,34 @@ export default function MapPage() {
             </MapContainer>
           </div>
 
-          {/* Map Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-            <span className="font-bold text-slate-300 uppercase tracking-wider text-[11px]">CPCB Severity Standard:</span>
-            <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#00E400]"></span> Good (0-50)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#9CFF00]"></span> Satisfactory (51-100)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#FFFF00]"></span> Moderate (101-200)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#FF7E00]"></span> Poor (201-300)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#FF0000]"></span> Very Poor (301-400)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#99004C]"></span> Severe (&gt;400)</span>
+          {/* Map Legends & Wind Speed Scale */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+            {/* CPCB AQI Legend */}
+            <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-mono">
+              <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">CPCB Legend:</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#00E400]"></span> Good</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#9CFF00]"></span> Satisfactory</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#FFFF00]"></span> Moderate</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#FF7E00]"></span> Poor</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#FF0000]"></span> Very Poor</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#99004C]"></span> Severe</span>
             </div>
+
+            {/* Wind Speed Gradient Scale */}
+            {layers.atmosphericFlow && (
+              <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
+                <span className="font-bold text-cyan-400 uppercase">WIND SPEED AT 10m:</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[#0284c7]">0</span>
+                  <span className="w-8 h-1.5 rounded-full bg-gradient-to-r from-[#0284c7] via-[#06b6d4] via-[#10b981] via-[#f59e0b] to-[#ef4444]"></span>
+                  <span className="text-[#ef4444]">10+ m/s</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Sidebar Controls & Station Inspector (4 Columns on Desktop) */}
+        {/* Sidebar Controls & Inspector (4 Columns on Desktop) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Layer Control Card */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
@@ -479,7 +597,7 @@ export default function MapPage() {
                 }`}
               >
                 <span className="flex items-center gap-2 font-semibold">
-                  <Wind className="w-4 h-4 text-cyan-400" /> Atmospheric Flow Vector
+                  <Wind className="w-4 h-4 text-cyan-400" /> Wind Streamlines (Weather Field)
                 </span>
                 {layers.atmosphericFlow ? <CheckSquare className="w-4 h-4 text-cyan-400" /> : <Square className="w-4 h-4 text-slate-600" />}
               </button>
@@ -509,6 +627,49 @@ export default function MapPage() {
               </button>
             </div>
           </div>
+
+          {/* Current Wind Streamline Info & Speed Controls Card */}
+          {layers.atmosphericFlow && (
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+                  <Gauge className="w-4 h-4 text-cyan-400" /> Current Wind Streamline Field
+                </h4>
+                <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-mono">
+                  <span className="text-slate-400 px-1 font-bold">Speed:</span>
+                  {[0.5, 1.0, 2.0].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setAnimSpeedFactor(s)}
+                      className={`px-2 py-0.5 rounded font-bold transition ${
+                        animSpeedFactor === s ? 'bg-cyan-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {s}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div className="p-2.5 bg-slate-950/70 rounded-xl border border-slate-800/80 space-y-0.5">
+                  <span className="text-[10px] text-slate-400 uppercase block font-semibold">Wind Vector</span>
+                  <span className="font-bold text-cyan-300 text-sm">{windDir}° (NW → SE)</span>
+                </div>
+                <div className="p-2.5 bg-slate-950/70 rounded-xl border border-slate-800/80 space-y-0.5">
+                  <span className="text-[10px] text-slate-400 uppercase block font-semibold">Surface Velocity</span>
+                  <span className="font-bold text-amber-400 text-sm">{windSpd} m/s</span>
+                </div>
+              </div>
+
+              <div className="p-2.5 bg-slate-950/70 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400">Ventilation ($V_c$):</span>
+                <span className="font-bold text-emerald-400">
+                  {diagnosticData?.diagnostics.ventilation.ventilation_index_proxy ?? 1800} m²/s
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Selected Station Inspector Card */}
           {activeStation && (
