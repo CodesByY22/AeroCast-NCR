@@ -72,20 +72,24 @@ export default function ForecastPage({ forecast, loading }: Props) {
 
         <div className="h-80 w-full pt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <LineChart key={`chart_${selectedPollutant}`} data={timeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
               <XAxis dataKey="horizon" stroke="#64748b" tick={{ fontSize: 12 }} />
               <YAxis stroke="#64748b" tick={{ fontSize: 12 }} label={{ value: selectedPollutant === 'aqi' ? 'AQI Score' : 'µg/m³', angle: -90, position: 'insideLeft', fill: '#64748b' }} />
               <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }} />
               <Legend />
               <Line
+                key={`line_${selectedPollutant}`}
                 type="monotone"
                 dataKey={selectedPollutant}
                 name={`${selectedPollutant.toUpperCase()}`}
-                stroke="#06b6d4"
-                strokeWidth={3}
-                dot={{ r: 5, fill: '#06b6d4' }}
-                activeDot={{ r: 8 }}
+                stroke={selectedPollutant === 'pm25' ? '#06b6d4' : selectedPollutant === 'pm10' ? '#f43f5e' : selectedPollutant === 'no2' ? '#38bdf8' : selectedPollutant === 'o3' ? '#10b981' : '#a855f7'}
+                strokeWidth={3.5}
+                isAnimationActive={true}
+                animationDuration={900}
+                animationEasing="ease-in-out"
+                dot={{ r: 5, fill: selectedPollutant === 'pm25' ? '#06b6d4' : selectedPollutant === 'pm10' ? '#f43f5e' : selectedPollutant === 'no2' ? '#38bdf8' : selectedPollutant === 'o3' ? '#10b981' : '#a855f7' }}
+                activeDot={{ r: 8, stroke: '#0f172a', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
