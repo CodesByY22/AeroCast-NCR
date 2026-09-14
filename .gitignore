@@ -1,0 +1,43 @@
+# Data files
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.csv
+*.parquet
+*.nc
+*.grib2
+*.geotiff
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+*.egg-info/
+.pytest_cache/
+
+# Models & Checkpoints
+models/*.joblib
+models/*.pkl
+models/*.pt
+models/*.onnx
+!models/.gitkeep
+
+# Frontend & Node
+node_modules/
+.next/
+dist/
+out/
+build/
+*.log
+.env.local
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
