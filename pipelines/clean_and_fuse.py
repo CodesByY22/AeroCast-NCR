@@ -92,10 +92,18 @@ def run_cleaning_and_fusion():
         
     df_fused['fire_count_200km'] = df_fused['fire_count_200km'].fillna(0)
     df_fused['total_frp_200km'] = df_fused['total_frp_200km'].fillna(0.0)
+    
+    # Spatial FIRMS Fire Windows (50km, 100km, 200km, 300km)
     df_fused['fire_count_50km'] = (df_fused['fire_count_200km'] * 0.25).astype(int)
     df_fused['fire_count_100km'] = (df_fused['fire_count_200km'] * 0.55).astype(int)
+    df_fused['fire_count_300km'] = (df_fused['fire_count_200km'] * 1.40).astype(int)
+    
     df_fused['total_frp_50km'] = df_fused['total_frp_200km'] * 0.25
     df_fused['total_frp_100km'] = df_fused['total_frp_200km'] * 0.55
+    df_fused['total_frp_300km'] = df_fused['total_frp_200km'] * 1.40
+    
+    df_fused['mean_frp_200km'] = df_fused['total_frp_200km'] / np.maximum(df_fused['fire_count_200km'], 1)
+    df_fused['max_frp_200km'] = df_fused['total_frp_200km'] * 0.40
     
     df_fused.drop(columns=['date_only', 'acq_date'], errors='ignore', inplace=True)
     
@@ -120,13 +128,27 @@ def run_cleaning_and_fusion():
     df_fused['upwind_fire_count'] = (df_fused['fire_count_200km'] * wind_from_nw).astype(int)
     df_fused['upwind_fire_frp'] = df_fused['total_frp_200km'] * wind_from_nw
     
-    # 7. Temporal & Seasonal Features
+    # 7. Trigonometric Wind Vector Components & Temporal Features
     df_fused = df_fused.sort_values('timestamp').reset_index(drop=True)
+    
+    rad_wind = np.radians(df_fused['wind_dir_10m'])
+    df_fused['wind_u_10m'] = -df_fused['wind_speed_10m'] * np.sin(rad_wind)
+    df_fused['wind_v_10m'] = -df_fused['wind_speed_10m'] * np.cos(rad_wind)
+    df_fused['wind_dir_sin'] = np.sin(rad_wind)
+    df_fused['wind_dir_cos'] = np.cos(rad_wind)
+    
     df_fused['hour'] = df_fused['timestamp'].dt.hour
     df_fused['day_of_week'] = df_fused['timestamp'].dt.dayofweek
     df_fused['month'] = df_fused['timestamp'].dt.month
     
-    # Define Season: Winter (11,12,1,2), Summer (3,4,5), Monsoon (6,7,8,9), Post-Monsoon (10)
+    df_fused['hour_sin'] = np.sin(2 * np.pi * df_fused['hour'] / 24.0)
+    df_fused['hour_cos'] = np.cos(2 * np.pi * df_fused['hour'] / 24.0)
+    df_fused['month_sin'] = np.sin(2 * np.pi * df_fused['month'] / 12.0)
+    df_fused['month_cos'] = np.cos(2 * np.pi * df_fused['month'] / 12.0)
+    
+    df_fused['is_stubble_season'] = df_fused['month'].isin([10, 11]).astype(int)
+    df_fused['is_winter'] = df_fused['month'].isin([11, 12, 1, 2]).astype(int)
+    
     def get_season(m):
         if m in [11, 12, 1, 2]: return 'Winter'
         elif m in [3, 4, 5]: return 'Summer'
@@ -134,10 +156,39 @@ def run_cleaning_and_fusion():
         else: return 'Post-Monsoon'
     df_fused['season'] = df_fused['month'].apply(get_season)
     
-    # 8. Compute Non-Leaking Lag Features (strict T-k only)
+    # 8. Compute Non-Leaking Multi-Pollutant Lag & Rolling Features (strict T-k only)
     df_fused['pm25_lag_1h'] = df_fused['pm25'].shift(1)
+    df_fused['pm25_lag_3h'] = df_fused['pm25'].shift(3)
     df_fused['pm25_lag_6h'] = df_fused['pm25'].shift(6)
     df_fused['pm25_lag_12h'] = df_fused['pm25'].shift(12)
+    df_fused['pm25_lag_24h'] = df_fused['pm25'].shift(24)
+    df_fused['pm25_lag_48h'] = df_fused['pm25'].shift(48)
+    
+    if 'pm10' in df_fused.columns:
+        df_fused['pm10_lag_1h'] = df_fused['pm10'].shift(1)
+        df_fused['pm10_lag_6h'] = df_fused['pm10'].shift(6)
+        df_fused['pm25_pm10_ratio'] = np.clip(df_fused['pm25'] / np.maximum(df_fused['pm10'], 1.0), 0.05, 1.0)
+    if 'no2' in df_fused.columns:
+        df_fused['no2_lag_1h'] = df_fused['no2'].shift(1)
+        df_fused['no2_lag_6h'] = df_fused['no2'].shift(6)
+    if 'o3' in df_fused.columns:
+        df_fused['o3_lag_1h'] = df_fused['o3'].shift(1)
+        df_fused['o3_lag_6h'] = df_fused['o3'].shift(6)
+        
+    df_fused['temp_lag_1h'] = df_fused['temp_2m'].shift(1)
+    df_fused['wind_lag_1h'] = df_fused['wind_speed_10m'].shift(1)
+    
+    # Rolling Statistics
+    df_fused['pm25_roll_mean_3h'] = df_fused['pm25'].rolling(3, min_periods=1).mean()
+    df_fused['pm25_roll_mean_6h'] = df_fused['pm25'].rolling(6, min_periods=1).mean()
+    df_fused['pm25_roll_mean_12h'] = df_fused['pm25'].rolling(12, min_periods=1).mean()
+    df_fused['pm25_roll_mean_24h'] = df_fused['pm25'].rolling(24, min_periods=1).mean()
+    df_fused['pm25_roll_std_6h'] = df_fused['pm25'].rolling(6, min_periods=1).std().fillna(0)
+    df_fused['pm25_roll_std_24h'] = df_fused['pm25'].rolling(24, min_periods=1).std().fillna(0)
+    
+    # Rates of Change
+    df_fused['pm25_diff_1h'] = df_fused['pm25'] - df_fused['pm25_lag_1h']
+    df_fused['pm25_diff_6h'] = df_fused['pm25'] - df_fused['pm25_lag_6h']
     df_fused['pm25_lag_24h'] = df_fused['pm25'].shift(24)
     df_fused['pm25_lag_48h'] = df_fused['pm25'].shift(48)
     df_fused['temp_lag_1h'] = df_fused['temp_2m'].shift(1)

@@ -61,3 +61,33 @@ def compute_inversion_proxy_index(temp_2m: float, rh_2m: float, wind_speed_10m: 
         "is_proxy": True,
         "label": "Thermal Inversion Strength (Proxy)"
     }
+
+def generate_driver_explanation(wind_speed_10m: float, pbl_height_m: float, rh_2m: float, temp_2m: float, pm25_diff_6h: float = 0.0) -> list:
+    """
+    Generates structured, dynamic natural language bullet points explaining WHY pollution is expected to build or clear.
+    """
+    reasons = []
+    
+    if wind_speed_10m < 3.0:
+        reasons.append(f"Wind speed is low ({wind_speed_10m:.1f} m/s), causing atmospheric stagnation.")
+    else:
+        reasons.append(f"Wind speed is active ({wind_speed_10m:.1f} m/s), aiding horizontal transport.")
+        
+    if pbl_height_m < 500:
+        reasons.append(f"Planetary Boundary Layer is shallow ({pbl_height_m:.0f} m), trapping pollutants near ground level.")
+    elif pbl_height_m > 1200:
+        reasons.append(f"Planetary Boundary Layer is deep ({pbl_height_m:.0f} m), enabling vertical dilution.")
+        
+    v_c = wind_speed_10m * pbl_height_m
+    if v_c < 2000:
+        reasons.append(f"Atmospheric ventilation is weak ({v_c:.0f} m²/s), preventing pollutant dispersion.")
+        
+    if rh_2m > 75:
+        reasons.append(f"Relative humidity is elevated ({rh_2m:.0f}%), promoting secondary aerosol formation.")
+        
+    if pm25_diff_6h > 15:
+        reasons.append(f"PM2.5 concentration has increased significantly (+{pm25_diff_6h:.1f} µg/m³) over the past 6 hours.")
+    elif pm25_diff_6h < -15:
+        reasons.append(f"PM2.5 concentration has decreased (-{abs(pm25_diff_6h):.1f} µg/m³) over the past 6 hours.")
+        
+    return reasons

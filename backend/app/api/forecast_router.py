@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from app.core.aqi_calculator import compute_cpcb_aqi
-from app.diagnostics.meteorology import compute_ventilation_index_proxy, compute_inversion_proxy_index
-from app.services.smoke_risk import compute_smoke_transport_risk
+from app.diagnostics.meteorology import compute_ventilation_index_proxy, compute_inversion_proxy_index, generate_driver_explanation
+from app.services.smoke_risk import compute_smoke_transport_risk, compute_ranked_regional_smoke_risk
 
 router = APIRouter(prefix="/api", tags=["Forecast & Diagnostics"])
 
@@ -21,10 +21,11 @@ OPENAQ_RAW_PATH = os.path.join(ROOT_DIR, "data", "raw", "openaq_raw.csv")
 
 # Load models cache
 models_cache = {}
+classifiers_cache = {}
 feature_cols = []
 
 def load_resources():
-    global models_cache, feature_cols
+    global models_cache, classifiers_cache, feature_cols
     if not models_cache:
         feat_path = os.path.join(MODELS_DIR, "feature_names.joblib")
         if os.path.exists(feat_path):
@@ -33,6 +34,11 @@ def load_resources():
             m_path = os.path.join(MODELS_DIR, f"xgboost_pm25_h{h}.joblib")
             if os.path.exists(m_path):
                 models_cache[h] = joblib.load(m_path)
+                
+        c_sev_path = os.path.join(MODELS_DIR, "classifier_severe_h24.joblib")
+        c_vp_path = os.path.join(MODELS_DIR, "classifier_very_poor_h24.joblib")
+        if os.path.exists(c_sev_path): classifiers_cache['severe'] = joblib.load(c_sev_path)
+        if os.path.exists(c_vp_path): classifiers_cache['very_poor'] = joblib.load(c_vp_path)
 
 @router.get("/forecast/72h")
 def get_72h_forecast():
@@ -109,7 +115,7 @@ def get_72h_forecast():
 @router.get("/diagnostics/drivers")
 def get_driver_diagnostics():
     """
-    Returns the WHY meteorological driver analysis and feature importance trace.
+    Returns the WHY meteorological driver analysis, feature importance trace, and dynamic driver explanation.
     """
     load_resources()
     if not os.path.exists(DATA_PATH):
@@ -124,8 +130,14 @@ def get_driver_diagnostics():
     rh = float(latest['rh_2m'])
     hour = datetime.now().hour
     
+    # 6h PM2.5 change
+    pm25_diff_6h = 0.0
+    if len(df) >= 7:
+        pm25_diff_6h = float(latest['pm25']) - float(df.iloc[-7]['pm25'])
+    
     ventilation = compute_ventilation_index_proxy(wind_spd, pbl_h)
     inversion = compute_inversion_proxy_index(temp, rh, wind_spd, hour)
+    driver_reasons = generate_driver_explanation(wind_spd, pbl_h, rh, temp, pm25_diff_6h)
     
     feature_importances = []
     if 24 in models_cache:
@@ -153,6 +165,7 @@ def get_driver_diagnostics():
             "ventilation": ventilation,
             "inversion": inversion
         },
+        "driver_explanations": driver_reasons,
         "feature_explanations": feature_importances,
         "explanation_trace": f"Current AQI dynamics are governed by primary predictor '{top_feat}' ({top_pct}% gain) coupled with {ventilation['status']}."
     }
@@ -160,7 +173,7 @@ def get_driver_diagnostics():
 @router.get("/risk/stubble")
 def get_stubble_smoke_risk():
     """
-    Returns upwind stubble burning transport risk analysis & active fire clusters.
+    Returns physics-guided upwind smoke transport risk analysis & ranked regional breakdown.
     """
     if not os.path.exists(DATA_PATH):
         raise HTTPException(status_code=500, detail="Data missing")
@@ -174,6 +187,7 @@ def get_stubble_smoke_risk():
     fire_count = int(latest.get('fire_count_200km', 120))
     
     risk_info = compute_smoke_transport_risk(wind_dir, wind_spd, total_frp, fire_count)
+    ranked_regions = compute_ranked_regional_smoke_risk(wind_dir, wind_spd)
     
     fires = []
     if os.path.exists(FIRMS_PATH):
@@ -189,8 +203,10 @@ def get_stubble_smoke_risk():
             
     return {
         "transport_risk": risk_info,
+        "ranked_regional_risk": ranked_regions,
         "delhi_center": {"lat": 28.6139, "lon": 77.2090},
-        "active_fire_hotspots": fires
+        "active_fire_hotspots": fires,
+        "scientific_notice": "Physics-guided smoke transport risk proxy. Does not assert chemical source apportionment or 3D plume dispersion without operational WRF-Chem."
     }
 
 @router.get("/map/stations")

@@ -3,8 +3,7 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
-from sklearn.ensemble import RandomForestRegressor
+from scipy.stats import pearsonr
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, median_absolute_error, precision_recall_fscore_support
 
@@ -16,15 +15,20 @@ HORIZONS = [1, 6, 12, 24, 48, 72]
 
 FEATURE_COLS = [
     'pm25', 'pm10', 'no2', 'o3', 'temp_2m', 'rh_2m', 'surface_pressure',
-    'wind_speed_10m', 'wind_dir_10m', 'pbl_height_proxy', 'fire_count_200km',
-    'total_frp_200km', 'ventilation_index_proxy', 'inversion_proxy_index',
-    'stubble_transport_risk', 'upwind_fire_count', 'upwind_fire_frp',
-    'pm25_lag_1h', 'pm25_lag_6h', 'pm25_lag_12h', 'pm25_lag_24h', 'pm25_lag_48h',
-    'temp_lag_1h', 'wind_lag_1h', 'hour', 'day_of_week', 'month'
+    'wind_speed_10m', 'wind_dir_10m', 'wind_u_10m', 'wind_v_10m', 'wind_dir_sin', 'wind_dir_cos',
+    'pbl_height_proxy', 'ventilation_index_proxy', 'inversion_proxy_index',
+    'stubble_transport_risk', 'fire_count_50km', 'fire_count_100km', 'fire_count_200km', 'fire_count_300km',
+    'total_frp_50km', 'total_frp_100km', 'total_frp_200km', 'total_frp_300km', 'mean_frp_200km', 'max_frp_200km',
+    'upwind_fire_count', 'upwind_fire_frp',
+    'pm25_lag_1h', 'pm25_lag_3h', 'pm25_lag_6h', 'pm25_lag_12h', 'pm25_lag_24h', 'pm25_lag_48h',
+    'pm10_lag_1h', 'pm10_lag_6h', 'no2_lag_1h', 'o3_lag_1h',
+    'pm25_roll_mean_3h', 'pm25_roll_mean_6h', 'pm25_roll_mean_12h', 'pm25_roll_mean_24h',
+    'pm25_roll_std_6h', 'pm25_roll_std_24h', 'pm25_diff_1h', 'pm25_diff_6h', 'pm25_pm10_ratio',
+    'hour', 'day_of_week', 'month', 'hour_sin', 'hour_cos', 'month_sin', 'month_cos',
+    'is_stubble_season', 'is_winter'
 ]
 
 def classify_aqi_category(pm25_val):
-    """Categorize PM2.5 into official CPCB AQI bands."""
     if pm25_val <= 30: return "Good"
     elif pm25_val <= 60: return "Satisfactory"
     elif pm25_val <= 90: return "Moderately Polluted"
@@ -34,28 +38,26 @@ def classify_aqi_category(pm25_val):
 
 def train_and_evaluate():
     os.makedirs(MODELS_DIR, exist_ok=True)
-    print(f"[ML Training] Loading multi-year dataset from {DATA_PATH}...")
+    print(f"[ML Training] Loading multi-year dataset with 57 features from {DATA_PATH}...")
     df = pd.read_csv(DATA_PATH)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df = df.sort_values('timestamp').reset_index(drop=True)
     
-    # 1. Chronological Split (Train: 2023-2024, Val: 2025, Test: 2026)
+    # Chronological Split (Train: 2023-2024, Val: 2025, Test: 2026)
     train_mask = df['timestamp'] < '2025-01-01'
     val_mask = (df['timestamp'] >= '2025-01-01') & (df['timestamp'] < '2026-01-01')
     test_mask = df['timestamp'] >= '2026-01-01'
     
     print("\n========================================================")
-    print("STRICT CHRONOLOGICAL MULTI-YEAR EVALUATION SPLIT")
+    print("STRICT CHRONOLOGICAL MULTI-YEAR EVALUATION SPLIT (V2)")
     print(f"Train Period : {df[train_mask]['timestamp'].min()} to {df[train_mask]['timestamp'].max()} ({train_mask.sum()} hrs)")
     print(f"Val Period   : {df[val_mask]['timestamp'].min()} to {df[val_mask]['timestamp'].max()} ({val_mask.sum()} hrs)")
     print(f"Test Period  : {df[test_mask]['timestamp'].min()} to {df[test_mask]['timestamp'].max()} ({test_mask.sum()} hrs)")
-    print("Rule Verification: Strict time-ordered non-overlapping evaluation.")
     print("========================================================\n")
     
     results = []
     seasonal_results = {}
     severe_event_results = {}
-    baseline_comparison = {}
     
     for h in HORIZONS:
         df_target = df.copy()
@@ -66,39 +68,37 @@ def train_and_evaluate():
         val_h = df_clean[(df_clean['timestamp'] >= '2025-01-01') & (df_clean['timestamp'] < '2026-01-01')]
         test_h = df_clean[df_clean['timestamp'] >= '2026-01-01']
         
-        # Combine Train + Val for final model fit if preferred, or fit on Train
         X_train, y_train = train_h[FEATURE_COLS], train_h[f'target_pm25_{h}h']
         X_test, y_test = test_h[FEATURE_COLS], test_h[f'target_pm25_{h}h']
         
-        # 1. Baseline 1: Persistence (y_pred = current PM2.5)
+        # 1. Baseline 1: Persistence
         y_pred_pers = test_h['pm25']
-        mae_pers = mean_absolute_error(y_test, y_pred_pers)
-        rmse_pers = np.sqrt(mean_squared_error(y_test, y_pred_pers))
-        r2_pers = r2_score(y_test, y_pred_pers)
-        medae_pers = median_absolute_error(y_test, y_pred_pers)
-        
+        r_pers, _ = pearsonr(y_test, y_pred_pers) if len(y_test) > 1 else (0.0, 0.0)
         results.append({
             "Horizon": f"+{h}h",
             "Model": "Persistence Baseline",
-            "MAE": round(float(mae_pers), 2),
-            "RMSE": round(float(rmse_pers), 2),
-            "R2": round(float(r2_pers), 4),
-            "MedAE": round(float(medae_pers), 2)
+            "MAE": round(float(mean_absolute_error(y_test, y_pred_pers)), 2),
+            "RMSE": round(float(np.sqrt(mean_squared_error(y_test, y_pred_pers))), 2),
+            "R2": round(float(r2_score(y_test, y_pred_pers)), 4),
+            "MedAE": round(float(median_absolute_error(y_test, y_pred_pers)), 2),
+            "Corr_r": round(float(r_pers), 4)
         })
         
-        # 2. Baseline 2: Diurnal Persistence (y_pred = PM2.5 at T-24)
+        # 2. Baseline 2: Diurnal Persistence
         y_pred_diurnal = test_h['pm25_lag_24h'].fillna(test_h['pm25'])
+        r_diurnal, _ = pearsonr(y_test, y_pred_diurnal) if len(y_test) > 1 else (0.0, 0.0)
         results.append({
             "Horizon": f"+{h}h",
             "Model": "Diurnal Persistence",
             "MAE": round(float(mean_absolute_error(y_test, y_pred_diurnal)), 2),
             "RMSE": round(float(np.sqrt(mean_squared_error(y_test, y_pred_diurnal))), 2),
             "R2": round(float(r2_score(y_test, y_pred_diurnal)), 4),
-            "MedAE": round(float(median_absolute_error(y_test, y_pred_diurnal)), 2)
+            "MedAE": round(float(median_absolute_error(y_test, y_pred_diurnal)), 2),
+            "Corr_r": round(float(r_diurnal), 4)
         })
         
-        # 3. XGBoost Regressor (Primary Operational Engine)
-        xgb = XGBRegressor(n_estimators=150, max_depth=5, learning_rate=0.04, random_state=42, n_jobs=-1)
+        # 3. Enhanced V2 XGBoost Regressor
+        xgb = XGBRegressor(n_estimators=200, max_depth=6, learning_rate=0.03, subsample=0.8, colsample_bytree=0.8, random_state=42, n_jobs=-1)
         xgb.fit(X_train, y_train)
         y_pred_xgb = xgb.predict(X_test)
         
@@ -106,22 +106,24 @@ def train_and_evaluate():
         rmse_xgb = np.sqrt(mean_squared_error(y_test, y_pred_xgb))
         r2_xgb = r2_score(y_test, y_pred_xgb)
         medae_xgb = median_absolute_error(y_test, y_pred_xgb)
+        r_xgb, _ = pearsonr(y_test, y_pred_xgb) if len(y_test) > 1 else (0.0, 0.0)
         
         results.append({
             "Horizon": f"+{h}h",
-            "Model": "XGBoost Regressor",
+            "Model": "Enhanced XGBoost V2",
             "MAE": round(float(mae_xgb), 2),
             "RMSE": round(float(rmse_xgb), 2),
             "R2": round(float(r2_xgb), 4),
-            "MedAE": round(float(medae_xgb), 2)
+            "MedAE": round(float(medae_xgb), 2),
+            "Corr_r": round(float(r_xgb), 4)
         })
         
-        # Save serialized model artifact
+        # Serialize model artifact
         model_filename = os.path.join(MODELS_DIR, f"xgboost_pm25_h{h}.joblib")
         joblib.dump(xgb, model_filename)
-        print(f"[ML Training] Saved multi-year XGBoost model (+{h}h) -> R²: {r2_xgb:.4f}, MAE: {mae_xgb:.2f}")
+        print(f"[ML Training] Saved Enhanced XGBoost V2 model (+{h}h) -> R²: {r2_xgb:.4f}, MAE: {mae_xgb:.2f}, r: {r_xgb:.4f}")
         
-        # 4. Seasonal Performance Evaluation on Test Set (+24h horizon example)
+        # Seasonal breakdown for +24h
         if h == 24:
             test_h_season = test_h.copy()
             test_h_season['pred_xgb'] = y_pred_xgb
@@ -133,32 +135,22 @@ def train_and_evaluate():
                     s_rmse = np.sqrt(mean_squared_error(sub[f'target_pm25_{h}h'], sub['pred_xgb']))
                     seasonal_results[season_name] = {
                         "Hours": len(sub),
-                        "R2": round(float(s_r2), 4),
+                        "Observed_Mean": round(float(sub[f'target_pm25_{h}h'].mean()), 2),
+                        "Predicted_Mean": round(float(sub['pred_xgb'].mean()), 2),
                         "MAE": round(float(s_mae), 2),
-                        "RMSE": round(float(s_rmse), 2)
+                        "RMSE": round(float(s_rmse), 2),
+                        "R2": round(float(s_r2), 4)
                     }
-                    
-            # 5. Severe Pollution Event Classification Evaluation (+24h)
-            y_true_cat = [classify_aqi_category(val) for val in y_test]
-            y_pred_cat = [classify_aqi_category(val) for val in y_pred_xgb]
-            
-            p, r, f1, _ = precision_recall_fscore_support(y_true_cat, y_pred_cat, labels=["Very Poor", "Severe"], zero_division=0)
-            severe_event_results = {
-                "Very Poor": {"Precision": round(float(p[0]), 4), "Recall": round(float(r[0]), 4), "F1": round(float(f1[0]), 4)},
-                "Severe": {"Precision": round(float(p[1]), 4), "Recall": round(float(r[1]), 4), "F1": round(float(f1[1]), 4)}
-            }
 
     # Save feature names
     joblib.dump(FEATURE_COLS, os.path.join(MODELS_DIR, "feature_names.joblib"))
     
     df_results = pd.DataFrame(results)
-    print("\n--- MULTI-YEAR MULTI-HORIZON EVALUATION REPORT ---")
+    print("\n--- ENHANCED MULTI-HORIZON EVALUATION REPORT (V2) ---")
     print(df_results.to_string(index=False))
-    print("\n--- SEASONAL PERFORMANCE BREAKDOWN (+24H) ---")
+    print("\n--- SEASONAL PERFORMANCE BREAKDOWN (+24H V2) ---")
     print(json.dumps(seasonal_results, indent=2))
-    print("\n--- SEVERE POLLUTION CLASSIFICATION PERFORMANCE (+24H) ---")
-    print(json.dumps(severe_event_results, indent=2))
-    print("-----------------------------------------------------------\n")
+    print("----------------------------------------------------\n")
     
     # Save metrics JSON
     metrics_summary = {
@@ -167,13 +159,10 @@ def train_and_evaluate():
             "start_date": str(df['timestamp'].min()),
             "end_date": str(df['timestamp'].max()),
             "total_records": len(df),
-            "train_records": int(train_mask.sum()),
-            "val_records": int(val_mask.sum()),
-            "test_records": int(test_mask.sum())
+            "feature_count": len(FEATURE_COLS)
         },
         "horizons": results,
-        "seasonal": seasonal_results,
-        "severe_events": severe_event_results
+        "seasonal": seasonal_results
     }
     
     with open(os.path.join(PROCESSED_DIR, "model_metrics.json"), "w") as f:
