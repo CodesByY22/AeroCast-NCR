@@ -80,7 +80,7 @@ function CanvasWindStreamlineLayer({
       canvas.style.width = '100%'
       canvas.style.height = '100%'
       canvas.style.pointerEvents = 'none'
-      canvas.style.zIndex = '350'
+      canvas.style.zIndex = '500'
       container.appendChild(canvas)
       canvasRef.current = canvas
     }
@@ -96,7 +96,9 @@ function CanvasWindStreamlineLayer({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const PARTICLE_COUNT = 220
+    const PARTICLE_COUNT = 380
+    const MAX_TRAIL_LENGTH = 12
+
     interface Particle {
       x: number
       y: number
@@ -104,32 +106,34 @@ function CanvasWindStreamlineLayer({
       maxAge: number
       speedMult: number
       isCorridor: boolean
+      trail: { x: number; y: number }[]
     }
 
     const resetParticle = (w: number, h: number): Particle => {
-      const isBoundary = Math.random() < 0.65
+      const isBoundary = Math.random() < 0.70
       let x = Math.random() * w
       let y = Math.random() * h
 
       if (isBoundary) {
         if (Math.random() < 0.5) {
-          x = Math.random() * (w * 0.8)
-          y = -5
+          x = Math.random() * w
+          y = -10
         } else {
-          x = -5
-          y = Math.random() * (h * 0.8)
+          x = -10
+          y = Math.random() * h
         }
       }
 
-      const isCorridor = isSmokeTransportActive && (x < w * 0.65 && y < h * 0.65)
+      const isCorridor = isSmokeTransportActive && (x < w * 0.70 && y < h * 0.70)
 
       return {
         x,
         y,
-        age: Math.floor(Math.random() * 30),
+        age: Math.floor(Math.random() * 20),
         maxAge: 70 + Math.floor(Math.random() * 90),
-        speedMult: 0.75 + Math.random() * 0.5,
-        isCorridor
+        speedMult: 0.85 + Math.random() * 0.45,
+        isCorridor,
+        trail: [{ x, y }]
       }
     }
 
@@ -145,15 +149,15 @@ function CanvasWindStreamlineLayer({
     const baseVx = Math.sin(moveAngleRad)
     const baseVy = -Math.cos(moveAngleRad)
 
-    const baseSpeed = Math.max(0.6, windSpeed * 0.45 * animSpeedFactor)
+    const baseSpeed = Math.max(1.2, windSpeed * 0.55 * animSpeedFactor)
 
     const getColor = (speed: number, isCorridor: boolean) => {
-      if (isCorridor) return 'rgba(56, 189, 248, 0.95)' // Bright Sky Blue for NW Corridor
-      if (speed < 2) return 'rgba(2, 132, 199, 0.65)'   // Cool Blue
-      if (speed < 4) return 'rgba(6, 182, 212, 0.75)'   // Cyan
-      if (speed < 6) return 'rgba(16, 185, 129, 0.80)'  // Emerald
-      if (speed < 8) return 'rgba(245, 158, 11, 0.85)'  // Amber
-      return 'rgba(239, 68, 68, 0.90)'                   // Red
+      if (isCorridor) return 'rgba(56, 189, 248, 0.95)' // Vibrant Sky Blue for NW Corridor
+      if (speed < 2) return 'rgba(56, 189, 248, 0.85)'   // Sky Blue
+      if (speed < 4) return 'rgba(34, 211, 238, 0.90)'   // Cyan
+      if (speed < 6) return 'rgba(52, 211, 153, 0.90)'   // Emerald Green
+      if (speed < 8) return 'rgba(251, 191, 36, 0.95)'   // Amber Yellow
+      return 'rgba(248, 113, 113, 0.95)'                 // Coral Red
     }
 
     const render = () => {
@@ -161,38 +165,50 @@ function CanvasWindStreamlineLayer({
 
       // Smooth trailing fade effect
       ctx.globalCompositeOperation = 'destination-out'
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.10)'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       ctx.globalCompositeOperation = 'source-over'
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i]
-        ctx.beginPath()
-        ctx.moveTo(p.x, p.y)
 
-        // Perpendicular wave curve for natural atmospheric flow curvature
-        const curveOffset = Math.sin((p.age + i) * 0.06) * 0.35
-        const vx = baseVx + (-baseVy * curveOffset * 0.25)
-        const vy = baseVy + (baseVx * curveOffset * 0.25)
+        // Curvature calculation for atmospheric flow lines
+        const curveOffset = Math.sin((p.age + i) * 0.05) * 0.35
+        const vx = baseVx + (-baseVy * curveOffset * 0.22)
+        const vy = baseVy + (baseVx * curveOffset * 0.22)
 
         p.x += vx * baseSpeed * p.speedMult
         p.y += vy * baseSpeed * p.speedMult
         p.age++
 
-        ctx.lineTo(p.x, p.y)
-        ctx.strokeStyle = getColor(windSpeed, p.isCorridor)
-        ctx.lineWidth = p.isCorridor ? 2.2 : 1.4
-        ctx.lineCap = 'round'
-        ctx.stroke()
+        p.trail.push({ x: p.x, y: p.y })
+        if (p.trail.length > MAX_TRAIL_LENGTH) {
+          p.trail.shift()
+        }
 
-        if (p.age >= p.maxAge || p.x < -15 || p.x > canvas.width + 15 || p.y < -15 || p.y > canvas.height + 15) {
-          const np = resetParticle(canvas.width, canvas.height)
-          p.x = np.x
-          p.y = np.y
-          p.age = np.age
-          p.maxAge = np.maxAge
-          p.isCorridor = np.isCorridor
+        if (p.trail.length > 1) {
+          ctx.beginPath()
+          ctx.moveTo(p.trail[0].x, p.trail[0].y)
+          for (let t = 1; t < p.trail.length; t++) {
+            ctx.lineTo(p.trail[t].x, p.trail[t].y)
+          }
+          ctx.strokeStyle = getColor(windSpeed, p.isCorridor)
+          ctx.lineWidth = p.isCorridor ? 2.6 : 1.8
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctx.stroke()
+
+          // Glowing particle head dot
+          const head = p.trail[p.trail.length - 1]
+          ctx.beginPath()
+          ctx.arc(head.x, head.y, p.isCorridor ? 2.0 : 1.4, 0, Math.PI * 2)
+          ctx.fillStyle = p.isCorridor ? '#7dd3fc' : '#ffffff'
+          ctx.fill()
+        }
+
+        if (p.age >= p.maxAge || p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) {
+          particles[i] = resetParticle(canvas.width, canvas.height)
         }
       }
 
