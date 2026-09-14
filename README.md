@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 # 🌬️ AeroCast NCR (SIH26082)
 
+=======
+ # 🌬️ AeroCast NCR (SIH26082)
+>>>>>>> 8dc47b4501c6532dc8e6878eddbac02bb8754e82
 <div align="center">
 
 ![AeroCast NCR Banner](https://img.shields.io/badge/AeroCast_NCR-Delhi_NCR_Air_Pollution_Forecasting-00f2fe?style=for-the-badge&logo=wind&logoColor=white)
