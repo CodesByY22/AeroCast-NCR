@@ -73,19 +73,46 @@ const createFireIcon = (frp: number) => {
   })
 }
 
-const createWindIcon = (windDirDeg: number, windSpeed: number) => {
+const WIND_NODES: Array<{ name: string; lat: number; lon: number }> = [
+  { name: 'Central NCR', lat: 28.6139, lon: 77.2090 },
+  { name: 'NW Stubble Corridor', lat: 28.8500, lon: 76.8800 },
+  { name: 'North Corridor', lat: 28.9500, lon: 77.1000 },
+  { name: 'West Sector', lat: 28.4500, lon: 76.9200 },
+  { name: 'East Sector', lat: 28.5800, lon: 77.3800 },
+  { name: 'South Sector', lat: 28.3500, lon: 77.3100 }
+]
+
+const createWindIcon = (windDirDeg: number, windSpeed: number, sectorLabel: string = '') => {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+  const dirIdx = Math.round(((windDirDeg % 360) + 360) % 360 / 45) % 8
+  const cardinalText = directions[dirIdx]
+
   return L.divIcon({
-    className: 'custom-wind-marker',
+    className: 'custom-wind-node-icon',
     html: `
-      <div class="flex flex-col items-center justify-center p-2 rounded-2xl bg-cyan-950/90 border-2 border-cyan-400 text-cyan-200 shadow-2xl shadow-cyan-950/90 cursor-pointer">
-        <div style="transform: rotate(${windDirDeg}deg);" class="transition-transform duration-700 text-cyan-400 font-black text-lg">
-          ↑
+      <div class="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-950/95 border-2 border-cyan-400 text-cyan-200 shadow-2xl shadow-cyan-950/90 cursor-pointer backdrop-blur custom-wind-node">
+        <div style="transform: rotate(${windDirDeg}deg);" class="transition-transform duration-700 flex items-center justify-center">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L19 21L12 17L5 21L12 2Z" fill="url(#windGrad)" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 5V16" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3 2" class="wind-stream-line"/>
+            <defs>
+              <linearGradient id="windGrad" x1="12" y1="2" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#06b6d4"/>
+                <stop offset="1" stop-color="#10b981"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
-        <span class="text-[10px] font-bold font-mono text-slate-100 mt-0.5">${windSpeed} m/s</span>
+        <div class="flex items-center space-x-1 mt-1 px-2 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-700/80 font-mono text-[10px] font-extrabold text-cyan-300">
+          <span>${cardinalText}</span>
+          <span class="text-slate-500">·</span>
+          <span class="text-slate-100">${windSpeed} m/s</span>
+        </div>
+        ${sectorLabel ? `<span class="text-[9px] font-extrabold text-slate-400 mt-0.5 uppercase tracking-wider font-mono">${sectorLabel}</span>` : ''}
       </div>
     `,
-    iconSize: [56, 56],
-    iconAnchor: [28, 28]
+    iconSize: [68, 68],
+    iconAnchor: [34, 34]
   })
 }
 
@@ -332,38 +359,48 @@ export default function MapPage() {
                 )
               })}
 
-              {/* Layer 2: Atmospheric Wind Vector Overlay */}
-              {layers.atmosphericFlow && (
+              {/* Layer 2: Atmospheric Wind Vector Spatial Field */}
+              {layers.atmosphericFlow && WIND_NODES.map((node, idx) => (
                 <Marker
-                  position={NCR_CENTER}
-                  icon={createWindIcon(windDir, windSpd)}
+                  key={`wind_node_${idx}`}
+                  position={[node.lat, node.lon]}
+                  icon={createWindIcon(windDir, windSpd, node.name)}
                 >
-                  <Popup>
-                    <div className="p-3 bg-slate-900 text-slate-100 rounded-xl space-y-2 text-xs font-sans min-w-[200px]">
-                      <div className="font-bold text-sm text-cyan-400 flex items-center gap-1.5 border-b border-slate-800 pb-1">
-                        <Wind className="w-4 h-4" /> Atmospheric Flow Vector
+                  <Popup className="custom-leaflet-popup" closeButton={false}>
+                    <div className="p-3.5 space-y-2 text-xs font-sans min-w-[220px]">
+                      <div className="font-bold text-sm text-cyan-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <span className="flex items-center gap-1.5"><Wind className="w-4 h-4" /> {node.name} Flow Vector</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                          Node #{idx + 1}
+                        </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-mono">
                         <span className="text-slate-400">Wind Direction:</span>
                         <span className="font-bold text-slate-100">{windDir}° (NW → SE)</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-mono">
                         <span className="text-slate-400">Surface Speed:</span>
                         <span className="font-bold text-cyan-300">{windSpd} m/s</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-mono">
                         <span className="text-slate-400">Ventilation ($V_c$):</span>
                         <span className="font-bold text-amber-400">
                           {diagnosticData?.diagnostics.ventilation.ventilation_index_proxy ?? 1800} m²/s
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400 italic pt-1 border-t border-slate-800">
+                      <div className="flex justify-between font-mono">
+                        <span className="text-slate-400">PBL Height Proxy:</span>
+                        <span className="font-bold text-sky-400">
+                          {diagnosticData?.meteorological_drivers.pbl_height_proxy.value ?? 450} m
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 italic pt-1 border-t border-slate-800/80 font-mono">
                         {diagnosticData?.diagnostics.ventilation.status ?? 'Weak Ventilation'}
                       </div>
                     </div>
                   </Popup>
                 </Marker>
-              )}
+              ))}
 
               {/* Layer 3: Satellite Fire Hotspots (NASA FIRMS) */}
               {layers.fireActivity && stubbleData?.active_fire_hotspots.map((fire, idx) => (

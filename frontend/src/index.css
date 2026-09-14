@@ -42,6 +42,41 @@ body {
 }
 
 /* Custom Marker Hover Effects */
-.custom-station-marker:hover {
+.custom-station-marker:hover,
+.custom-wind-node-icon:hover {
   z-index: 9999 !important;
+}
+
+/* Animated Atmospheric Wind Vector Effects */
+@keyframes windPulse {
+  0% {
+    transform: scale(0.96);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 24px rgba(6, 182, 212, 0.7);
+  }
+  100% {
+    transform: scale(0.96);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+  }
+}
+
+@keyframes windStreamDash {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.custom-wind-node {
+  animation: windPulse 3.5s ease-in-out infinite;
+}
+
+.wind-stream-line {
+  stroke-dasharray: 5 3;
+  animation: windStreamDash 1.2s linear infinite;
 }
