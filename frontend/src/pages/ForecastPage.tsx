@@ -68,7 +68,7 @@ export default function ForecastPage({ forecast, loading }: Props) {
 
         <div className="h-[340px] w-full pt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <LineChart key={`forecast_chart_${selectedPollutant}`} data={timeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
               <XAxis dataKey="horizon" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
               <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
@@ -78,11 +78,15 @@ export default function ForecastPage({ forecast, loading }: Props) {
               />
               <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
               <Line
+                key={`forecast_line_${selectedPollutant}`}
                 type="monotone"
                 dataKey={selectedPollutant}
                 name={`${selectedPollutant.toUpperCase()} Concentration`}
                 stroke={selectedPollutant === 'pm25' ? '#06b6d4' : selectedPollutant === 'pm10' ? '#f43f5e' : selectedPollutant === 'no2' ? '#38bdf8' : selectedPollutant === 'o3' ? '#10b981' : '#a855f7'}
-                strokeWidth={3}
+                strokeWidth={3.5}
+                isAnimationActive={true}
+                animationDuration={1000}
+                animationEasing="ease-in-out"
                 dot={{ r: 5, fill: selectedPollutant === 'pm25' ? '#06b6d4' : selectedPollutant === 'pm10' ? '#f43f5e' : selectedPollutant === 'no2' ? '#38bdf8' : selectedPollutant === 'o3' ? '#10b981' : '#a855f7' }}
                 activeDot={{ r: 8, stroke: '#0f172a', strokeWidth: 2 }}
               />
