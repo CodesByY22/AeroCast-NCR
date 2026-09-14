@@ -96,8 +96,10 @@ function CanvasWindStreamlineLayer({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const PARTICLE_COUNT = 190
-    const MAX_TRAIL_LENGTH = 22
+    // Sparse, long-flowing meteorological streamline parameters
+    const PARTICLE_COUNT = 75
+    const MAX_TRAIL_LENGTH = 55
+    const MIN_SPAWN_DIST = 45
 
     interface Particle {
       x: number
@@ -109,18 +111,58 @@ function CanvasWindStreamlineLayer({
       trail: { x: number; y: number }[]
     }
 
-    const resetParticle = (w: number, h: number): Particle => {
-      const isBoundary = Math.random() < 0.75
-      let x = Math.random() * w
-      let y = Math.random() * h
+    // Direction calculation:
+    // windDirDeg is direction wind comes FROM.
+    // Particle movement direction is (windDirDeg + 180) degrees.
+    const moveAngleRad = ((windDirDeg + 180) % 360) * (Math.PI / 180)
+    const baseVx = Math.sin(moveAngleRad)
+    const baseVy = -Math.cos(moveAngleRad)
+    const baseSpeed = Math.max(0.6, windSpeed * 0.32 * animSpeedFactor)
 
-      if (isBoundary) {
-        if (Math.random() < 0.5) {
+    const existingParticles: Particle[] = []
+
+    const resetParticle = (w: number, h: number, isInitial = false): Particle => {
+      let x = 0
+      let y = 0
+      let attempts = 0
+      let valid = false
+
+      while (!valid && attempts < 25) {
+        attempts++
+        if (isInitial) {
           x = Math.random() * w
-          y = -15
-        } else {
-          x = -15
           y = Math.random() * h
+        } else {
+          // Upwind boundary spawning based on wind direction vector
+          const spawnTopOrLeft = Math.random() < 0.65
+          if (spawnTopOrLeft) {
+            if (baseVy > 0) {
+              x = Math.random() * w
+              y = -20
+            } else {
+              x = Math.random() * w
+              y = h + 20
+            }
+          } else {
+            if (baseVx > 0) {
+              x = -20
+              y = Math.random() * h
+            } else {
+              x = w + 20
+              y = Math.random() * h
+            }
+          }
+        }
+
+        // Distance check to maintain streamline separation
+        valid = true
+        for (const existing of existingParticles) {
+          const dx = existing.x - x
+          const dy = existing.y - y
+          if (Math.sqrt(dx * dx + dy * dy) < MIN_SPAWN_DIST) {
+            valid = false
+            break
+          }
         }
       }
 
@@ -129,54 +171,49 @@ function CanvasWindStreamlineLayer({
       return {
         x,
         y,
-        age: Math.floor(Math.random() * 30),
-        maxAge: 90 + Math.floor(Math.random() * 110),
-        speedMult: 0.80 + Math.random() * 0.40,
+        age: isInitial ? Math.floor(Math.random() * 120) : 0,
+        maxAge: 220 + Math.floor(Math.random() * 140),
+        speedMult: 0.82 + Math.random() * 0.36,
         isCorridor,
         trail: [{ x, y }]
       }
     }
 
-    const particles: Particle[] = []
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      particles.push(resetParticle(canvas.width, canvas.height))
+      const p = resetParticle(canvas.width, canvas.height, true)
+      existingParticles.push(p)
     }
 
-    // Direction calculation:
-    // windDirDeg is direction wind comes FROM.
-    // Particle movement direction is (windDirDeg + 180) degrees.
-    const moveAngleRad = ((windDirDeg + 180) % 360) * (Math.PI / 180)
-    const baseVx = Math.sin(moveAngleRad)
-    const baseVy = -Math.cos(moveAngleRad)
-
-    const baseSpeed = Math.max(0.7, windSpeed * 0.38 * animSpeedFactor)
-
-    const getColor = (speed: number, isCorridor: boolean) => {
-      if (isCorridor) return 'rgba(56, 189, 248, 0.75)' // Sophisticated Sky Blue for NW Corridor
-      if (speed < 2) return 'rgba(56, 189, 248, 0.55)'   // Translucent Sky Blue
-      if (speed < 4) return 'rgba(34, 211, 238, 0.65)'   // Cyan
-      if (speed < 6) return 'rgba(52, 211, 153, 0.70)'   // Soft Emerald
-      if (speed < 8) return 'rgba(251, 191, 36, 0.75)'   // Soft Amber
-      return 'rgba(248, 113, 113, 0.80)'                 // Soft Red
+    const getColor = (speed: number, isCorridor: boolean, alpha: number) => {
+      if (isCorridor) return `rgba(56, 189, 248, ${alpha * 0.85})` // Sky Blue for NW Corridor
+      if (speed < 2) return `rgba(56, 189, 248, ${alpha * 0.60})`   // Soft Sky Blue
+      if (speed < 4) return `rgba(34, 211, 238, ${alpha * 0.70})`   // Soft Cyan
+      if (speed < 6) return `rgba(52, 211, 153, ${alpha * 0.75})`   // Soft Emerald Green
+      if (speed < 8) return `rgba(251, 191, 36, ${alpha * 0.80})`   // Soft Amber
+      return `rgba(248, 113, 113, ${alpha * 0.85})`                 // Soft Coral Red
     }
 
     const render = () => {
       if (!ctx || !canvas) return
 
-      // Smooth trailing fade effect for silky fluid motion
+      // Smooth canvas fade for fluid, non-distracting motion blur
       ctx.globalCompositeOperation = 'destination-out'
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.07)'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       ctx.globalCompositeOperation = 'source-over'
 
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i]
+      const cx = canvas.width * 0.5
+      const cy = canvas.height * 0.5
+      const ncrRadius = Math.min(canvas.width, canvas.height) * 0.28
 
-        // Smooth atmospheric fluid curvature offset
-        const curveOffset = Math.sin((p.age + i) * 0.04) * 0.45
-        const vx = baseVx + (-baseVy * curveOffset * 0.20)
-        const vy = baseVy + (baseVx * curveOffset * 0.20)
+      for (let i = 0; i < existingParticles.length; i++) {
+        const p = existingParticles[i]
+
+        // Smooth atmospheric sinusoidal curvature along momentum vector
+        const curveOffset = Math.sin((p.age + i * 7) * 0.03) * 0.40
+        const vx = baseVx + (-baseVy * curveOffset * 0.18)
+        const vy = baseVy + (baseVx * curveOffset * 0.18)
 
         p.x += vx * baseSpeed * p.speedMult
         p.y += vy * baseSpeed * p.speedMult
@@ -188,20 +225,39 @@ function CanvasWindStreamlineLayer({
         }
 
         if (p.trail.length > 1) {
-          ctx.beginPath()
-          ctx.moveTo(p.trail[0].x, p.trail[0].y)
-          for (let t = 1; t < p.trail.length; t++) {
-            ctx.lineTo(p.trail[t].x, p.trail[t].y)
-          }
-          ctx.strokeStyle = getColor(windSpeed, p.isCorridor)
-          ctx.lineWidth = p.isCorridor ? 1.4 : 1.0
+          // Calculate distance from NCR central station cluster to soften density in center
+          const dxCenter = p.x - cx
+          const dyCenter = p.y - cy
+          const distCenter = Math.sqrt(dxCenter * dxCenter + dyCenter * dyCenter)
+          const centerFactor = distCenter < ncrRadius ? 0.45 + (distCenter / ncrRadius) * 0.55 : 1.0
+
+          // Render multi-segment fading trail
+          ctx.lineWidth = p.isCorridor ? 1.4 : 1.1
           ctx.lineCap = 'round'
           ctx.lineJoin = 'round'
-          ctx.stroke()
+
+          for (let t = 1; t < p.trail.length; t++) {
+            const progress = t / p.trail.length
+            const alpha = Math.sin(progress * Math.PI) * centerFactor
+
+            ctx.beginPath()
+            ctx.moveTo(p.trail[t - 1].x, p.trail[t - 1].y)
+            ctx.lineTo(p.trail[t].x, p.trail[t].y)
+            ctx.strokeStyle = getColor(windSpeed, p.isCorridor, alpha)
+            ctx.stroke()
+          }
+
+          // Subtle head tip highlight
+          const head = p.trail[p.trail.length - 1]
+          ctx.beginPath()
+          ctx.arc(head.x, head.y, 0.9, 0, Math.PI * 2)
+          ctx.fillStyle = p.isCorridor ? 'rgba(125, 211, 252, 0.85)' : `rgba(255, 255, 255, ${0.75 * centerFactor})`
+          ctx.fill()
         }
 
-        if (p.age >= p.maxAge || p.x < -30 || p.x > canvas.width + 30 || p.y < -30 || p.y > canvas.height + 30) {
-          particles[i] = resetParticle(canvas.width, canvas.height)
+        // Boundary respawn check
+        if (p.age >= p.maxAge || p.x < -40 || p.x > canvas.width + 40 || p.y < -40 || p.y > canvas.height + 40) {
+          existingParticles[i] = resetParticle(canvas.width, canvas.height, false)
         }
       }
 
