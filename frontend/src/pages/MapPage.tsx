@@ -291,45 +291,40 @@ export default function MapPage() {
                     }}
                   >
                     <Popup className="custom-leaflet-popup" closeButton={false}>
-                      <div className="p-3 bg-slate-900 text-slate-100 rounded-xl space-y-2 font-sans border border-slate-700 min-w-[210px] shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                          <span className="font-bold text-sm text-slate-100">{st.name}</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                      <div className="p-3.5 space-y-2.5 font-sans min-w-[220px]">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <span className="font-bold text-sm text-slate-100 tracking-tight">{st.name}</span>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-800/80">
                             {st.city}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-400 font-medium">Selected ({selectedFilter.toUpperCase()})</span>
-                          <span className="font-extrabold text-lg" style={{ color: st.color }}>{val}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-400 font-medium">CPCB AQI</span>
-                          <span className="font-extrabold text-base" style={{ color: st.color }}>{st.aqi}</span>
+                          <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Reading ({selectedFilter})</span>
+                          <span className="font-black text-xl font-mono" style={{ color: st.color }}>{val}</span>
                         </div>
 
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-400">Severity</span>
-                          <span className="font-bold px-2 py-0.5 rounded text-[10px] text-white" style={{ backgroundColor: st.color }}>
+                          <span className="text-slate-400 font-medium">CPCB Severity</span>
+                          <span className="font-extrabold px-2.5 py-0.5 rounded-full text-[10px] text-white shadow-md" style={{ backgroundColor: st.color }}>
                             {st.category}
                           </span>
                         </div>
 
-                        <div className="space-y-1 text-xs font-mono pt-1 border-t border-slate-800/80">
-                          <div className="flex justify-between">
-                            <span className="text-slate-400">PM2.5:</span>
-                            <span className="font-bold text-amber-400">{st.pm25} µg/m³</span>
+                        <div className="grid grid-cols-2 gap-1.5 text-xs font-mono pt-2 border-t border-slate-800/80">
+                          <div className="p-1.5 bg-slate-950/80 rounded-lg border border-slate-800/80 flex justify-between">
+                            <span className="text-slate-400">PM2.5</span>
+                            <span className="font-bold text-amber-400">{st.pm25}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-400">PM10:</span>
-                            <span className="font-bold text-rose-400">{st.pm10} µg/m³</span>
+                          <div className="p-1.5 bg-slate-950/80 rounded-lg border border-slate-800/80 flex justify-between">
+                            <span className="text-slate-400">PM10</span>
+                            <span className="font-bold text-rose-400">{st.pm10}</span>
                           </div>
                         </div>
 
-                        <div className="text-[10px] text-slate-500 pt-1 flex justify-between font-mono">
+                        <div className="text-[10px] text-slate-400 pt-1 flex justify-between font-mono border-t border-slate-800/60">
                           <span>Horizon: {selectedHorizon}</span>
-                          <span>{st.type}</span>
+                          <span className="text-cyan-400 font-semibold">{st.type}</span>
                         </div>
                       </div>
                     </Popup>
