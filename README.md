@@ -44,7 +44,7 @@ AeroCast NCR answers four fundamental operational questions in real time:
 | Question | Focus Area | Technical & Scientific Implementation |
 | :--- | :--- | :--- |
 | 📈 **1. WHAT?** | **72-Hour Pollution Forecast** | Predicts multi-horizon concentrations ($1\text{h}, 6\text{h}, 12\text{h}, 24\text{h}, 48\text{h}, 72\text{h}$) for $\text{PM}_{2.5}, \text{PM}_{10}, \text{NO}_2, \text{O}_3$, and official CPCB Indian AQI categories. |
-| 🧪 **2. WHY?** | **Meteorological Driver Diagnostics** | Calculates derived physical indicators: **Ventilation Index Proxy** ($V_c = U_{10\text{m}} \times H_{\text{PBL\_Proxy}}$) and **Thermal Inversion Proxy Index** ($0-100$) to explain atmospheric stagnation. |
+| 🧪 **2. WHY?** | **Meteorological Driver Diagnostics** | Calculates derived physical indicators: **Ventilation Index Proxy** ($V_c = U_{10\text{m}} \times \text{PBLH}_{\text{proxy}}$) and **Thermal Inversion Proxy Index** ($0-100$) to explain atmospheric stagnation. |
 | 🔥 **3. WHERE FROM?** | **Stubble Transport Risk** | Evaluates spatial active fire hotspots (**NASA VIIRS $375\text{m}$ / MODIS**) and matches them against $10\text{m}$ surface wind vectors ($\theta_{\text{wind}}$) blowing from upwind agricultural sectors. |
 | 🚨 **4. WHAT NEXT?** | **Dynamic CPCB Warnings** | Generates official CPCB-compliant dynamic warning alerts (**Good, Satisfactory, Moderate, Poor, Very Poor, Severe, Severe+**) with actionable health recommendations. |
 

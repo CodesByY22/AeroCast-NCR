@@ -23,6 +23,6 @@
 | `pbl_height_proxy` | Float64 | Open-Meteo / ERA5 | $\text{m}$ | Planetary Boundary Layer height proxy |
 | `fire_count_200km` | Int64 | NASA FIRMS | Count | Number of active upwind fires within 200km |
 | `total_frp_200km` | Float64 | NASA FIRMS | $\text{MW}$ | Total Fire Radiative Power in upwind sector |
-| `ventilation_index_proxy` | Float64 | Derived | $\text{m}^2/\text{s}$ | $\text{Wind\_Speed} \times \text{PBL\_Height\_Proxy}$ |
+| `ventilation_index_proxy` | Float64 | Derived | $\text{m}^2/\text{s}$ | $\text{WindSpeed} \times \text{PBLH}_{\text{proxy}}$ |
 | `inversion_proxy_index` | Float64 | Derived | Scale $0-100$ | Thermal stability / inversion strength proxy |
 | `stubble_transport_risk` | Float64 | Derived | Scale $0-100$ | Integrated upwind fire vector risk score |
