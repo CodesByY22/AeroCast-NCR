@@ -12,7 +12,6 @@ interface Props {
 
 export default function ForecastPage({ forecast, loading }: Props) {
   const [selectedPollutant, setSelectedPollutant] = useState<'pm25' | 'pm10' | 'no2' | 'o3' | 'aqi'>('pm25')
-  const [selectedHorizon, setSelectedHorizon] = useState<string>('+24h')
 
   if (loading && !forecast) {
     return <div className="p-8 text-center text-slate-400">Loading forecast engine...</div>
@@ -55,19 +54,9 @@ export default function ForecastPage({ forecast, loading }: Props) {
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">72-Hour Prediction Trajectory: {selectedPollutant.toUpperCase()}</span>
-          <div className="flex space-x-1">
-            {['+1h', '+6h', '+12h', '+24h', '+48h', '+72h'].map(h => (
-              <button
-                key={h}
-                onClick={() => setSelectedHorizon(h)}
-                className={`text-xs px-2.5 py-1 rounded-lg transition ${
-                  selectedHorizon === h ? 'bg-cyan-500 text-white font-bold' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {h}
-              </button>
-            ))}
-          </div>
+          <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/80 border border-cyan-900/80 px-2.5 py-1 rounded-lg">
+            Multi-Horizon Continuum (+0h to +72h)
+          </span>
         </div>
 
         <div className="h-80 w-full pt-4">
