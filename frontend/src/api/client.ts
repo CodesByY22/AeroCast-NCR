@@ -140,44 +140,46 @@ export interface WrfStubData {
   benchmark_reference: string
 }
 
+const BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export async function fetch72hForecast(): Promise<ForecastData> {
-  const res = await fetch('/api/forecast/72h')
+  const res = await fetch(`${BASE_URL}/api/forecast/72h`)
   if (!res.ok) throw new Error(`Forecast API failed: ${res.statusText}`)
   return res.json()
 }
 
 export async function fetchDiagnostics(): Promise<DiagnosticData> {
-  const res = await fetch('/api/diagnostics/drivers')
+  const res = await fetch(`${BASE_URL}/api/diagnostics/drivers`)
   if (!res.ok) throw new Error(`Diagnostics API failed: ${res.statusText}`)
   return res.json()
 }
 
 export async function fetchStubbleRisk(): Promise<StubbleRiskData> {
-  const res = await fetch('/api/risk/stubble')
+  const res = await fetch(`${BASE_URL}/api/risk/stubble`)
   if (!res.ok) throw new Error(`Stubble API failed: ${res.statusText}`)
   return res.json()
 }
 
 export async function fetchMapStations(horizon: string = '+0h'): Promise<MapStationsData> {
-  const res = await fetch(`/api/map/stations?horizon=${encodeURIComponent(horizon)}`)
+  const res = await fetch(`${BASE_URL}/api/map/stations?horizon=${encodeURIComponent(horizon)}`)
   if (!res.ok) throw new Error(`Map API failed: ${res.statusText}`)
   return res.json()
 }
 
 export async function fetchValidationMetrics(): Promise<ValidationMetricsData> {
-  const res = await fetch('/api/validation/metrics')
+  const res = await fetch(`${BASE_URL}/api/validation/metrics`)
   if (!res.ok) throw new Error(`Validation API failed: ${res.statusText}`)
   return res.json()
 }
 
 export async function fetchAlertsHistory(): Promise<AlertsHistoryData> {
-  const res = await fetch('/api/alerts/history')
+  const res = await fetch(`${BASE_URL}/api/alerts/history`)
   if (!res.ok) throw new Error(`Alerts API failed: ${res.statusText}`)
   return res.json()
 }
 
 export async function fetchWrfStub(): Promise<WrfStubData> {
-  const res = await fetch('/api/wrf-chem/stub')
+  const res = await fetch(`${BASE_URL}/api/wrf-chem/stub`)
   if (!res.ok) throw new Error(`WRF Stub API failed: ${res.statusText}`)
   return res.json()
 }
