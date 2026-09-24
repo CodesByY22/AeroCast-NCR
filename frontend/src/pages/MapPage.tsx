@@ -23,7 +23,8 @@ import {
   fetchStubbleRisk,
   MapStationsData,
   DiagnosticData,
-  StubbleRiskData
+  StubbleRiskData,
+  FALLBACK_MAP_STATIONS
 } from '../api/client'
 import { getBadgeStyle } from '../utils/colors'
 
@@ -369,7 +370,7 @@ export default function MapPage() {
     loadAllData(selectedHorizon)
   }, [selectedHorizon, loadAllData])
 
-  const stations = stationData?.stations || []
+  const stations = (stationData?.stations && stationData.stations.length > 0) ? stationData.stations : FALLBACK_MAP_STATIONS.stations
   const activeStation = stations.find(s => s.id === selectedStationId) || stations[0]
 
   const handleResetView = () => {

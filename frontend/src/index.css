@@ -42,6 +42,12 @@ body {
 }
 
 /* Custom Marker Hover Effects */
+.custom-station-marker,
+.custom-fire-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
 .custom-station-marker:hover,
 .custom-wind-node-icon:hover {
   z-index: 9999 !important;
