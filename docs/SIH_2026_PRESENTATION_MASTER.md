@@ -137,8 +137,8 @@ graph LR
 ```
 
 #### D. Actual Proof & Screenshot Callout
-- **Screenshot to Embed**: Top header bar of website showing live connection status badges (`OpenAQ: LIVE`, `Open-Meteo: CONNECTED`, `NASA FIRMS: LIVE`, `XGBoost: ONLINE`) + Leaflet NCR Air Quality Map thumbnail.
-- **Proof Value**: Demonstrates an active, connected, live multi-source web platform deployed on Vercel and Render.
+![Slide 1 Proof — Interactive NCR Air Quality Map](screenshots/map_page.png)
+- **Proof Value**: Demonstrates an active, connected, live multi-source web platform deployed on Vercel and Render with interactive CPCB monitoring nodes and weather particle streamlines.
 
 #### E. Speaker Notes Script
 > *"Respected Judges, good morning. We present AeroCast NCR for Problem Statement SIH26082 under the Ministry of Earth Sciences. Delhi NCR chokes every winter not just because of emissions, but because low surface winds and boundary layer collapse trap pollutants over the city while upwind stubble burning injects massive smoke plumes. AeroCast NCR transforms pollution management from reactive monitoring into 72-hour predictive intelligence by fusing 3.7 years of atmospheric reanalysis, ERA5 meteorology, and NASA satellite fire feeds into an operational multi-horizon forecasting platform."*
@@ -179,8 +179,8 @@ CORE PIPELINE STORY: FORECAST ➔ EXPLAIN ➔ TRACE ➔ ALERT
 ```
 
 #### D. Actual Proof & Screenshot Callout
-- **Screenshot to Embed**: Main Overview Dashboard (`OverviewPage.tsx`) showing current CPCB ground AQI badge (e.g. 317 Very Poor), pollutant breakdown cards ($\text{PM}_{2.5}, \text{PM}_{10}, \text{NO}_2, \text{O}_3$), and animated 72-hour mini forecast curve.
-- **Proof Value**: Proves that the system doesn't just show numbers—it explicitly structures pollution data around the 4 operational questions for government decision-makers.
+![Slide 2 Proof — Main Overview Dashboard](screenshots/overview_page.png)
+- **Proof Value**: Proves that the system doesn't just show numbers—it explicitly structures pollution data around the 4 operational questions for government decision-makers (current ground AQI, pollutant breakdown cards, and 72-hour mini forecast curve).
 
 #### E. Speaker Notes Script
 > *"Existing dashboards tell citizens that today's AQI is 350, but they leave authorities blind to tomorrow's risk. AeroCast NCR structures its solution around 4 core questions. First, WHAT is coming? Multi-horizon XGBoost models generate 72-hour pollutant curves. Second, WHY is it happening? Atmospheric diagnostics compute the Ventilation Index ($V_c = U_{10\text{m}} \times H_{\text{PBL}}$) to reveal if smog is trapped under an atmospheric lid. Third, WHERE is it coming from? Satellite fire vectors track upwind smoke transport from Punjab and Haryana. Fourth, WHAT NEXT? Automated CPCB algorithms trigger Stage I through IV GRAP alerts 24 hours before severe smog hits."*
@@ -249,8 +249,8 @@ XGBoost V2 (57 Feat): [███████████████████
 ```
 
 #### D. Actual Proof & Screenshot Callout
-- **Screenshot to Embed**: Model Validation Benchmark Page (`ValidationPage.tsx`) displaying exact touchless 2026 test set performance metrics, split protocol parameters, and observed vs predicted $\text{PM}_{2.5}$ time series line chart.
-- **Proof Value**: Proves rigorous scientific validation on untouched chronological data with zero data leakage.
+![Slide 3 Proof — Model Validation & Benchmarks](screenshots/validation_page.png)
+- **Proof Value**: Proves rigorous scientific validation on untouched chronological 2026 holdout data with zero data leakage, displaying benchmark tables and observed vs predicted $\text{PM}_{2.5}$ test series charts.
 
 #### E. Speaker Notes Script
 > *"Our technical architecture fuses 3.7 years of continuous hourly data across 5 NCR stations into 57 domain-engineered features. Crucially, we enforce strict chronological validation—training on 2023–2024, tuning on 2025, and testing on untouched 2026 holdout data with zero random leakage. At +6 hours, our V2 XGBoost model achieves an $R^2$ of 0.4456, significantly outperforming persistence. During Delhi's critical winter smog season, our +24h model maintains strong predictive skill with an $R^2$ of 0.4337. To solve the problem of missing extreme pollution spikes, we deployed class-weighted XGBClassifiers that achieve 42.1% recall on severe events above 250 $\mu\text{g/m}^3$."*
@@ -295,8 +295,8 @@ Phase 3 (12 Months): 3D Eulerian WRF-Chem HPC Aerosol Chemistry Integration via 
 ```
 
 #### D. Actual Proof & Screenshot Callout
-- **Screenshot to Embed**: Atmospheric Intelligence Page (`AtmospherePage.tsx`) showing Ventilation Index ($V_c = U_{10\text{m}} \times H_{\text{PBL}}$) gauge and Thermal Inversion proxy metrics.
-- **Proof Value**: Demonstrates operational feasibility and transparent proxy labeling, proving the team understands physical boundary layer limitations.
+![Slide 4 Proof — Atmospheric Intelligence Diagnostics](screenshots/atmosphere_page.png)
+- **Proof Value**: Demonstrates operational feasibility and transparent proxy labeling, displaying Ventilation Index ($V_c = U_{10\text{m}} \times H_{\text{PBL}}$) gauge and Thermal Inversion proxy metrics.
 
 #### E. Speaker Notes Script
 > *"AeroCast NCR is operationally feasible today because XGBoost inference takes under 10 milliseconds, running on lightweight cloud infrastructure without requiring massive supercomputers for short-term predictions. We have engineered robust risk mitigations into the system: if live API feeds experience downtime, our frontend gracefully falls back to cached baseline datasets; to combat extreme smog misses, we use class-weighted classifiers; and to address long-horizon degradation beyond 24 hours, we have designed a formal NetCDF4 integration specification to couple with operational WRF-Chem HPC models in Phase 3."*
@@ -333,8 +333,9 @@ graph TD
 ```
 
 #### D. Actual Proof & Screenshot Callout
-- **Screenshot to Embed**: Alerts Centre Page (`AlertsPage.tsx`) displaying active Stage III GRAP alerts, 24-hour ahead warning alerts, and dynamic CPCB sub-index status.
-- **Proof Value**: Proves actionable government decision-support capability mapped directly to official Indian GRAP regulations.
+![Slide 5 Proof — Stubble Transport Risk Scorecard](screenshots/stubble_page.png)
+![Slide 5 Proof — CPCB Alerts Centre](screenshots/alerts_page.png)
+- **Proof Value**: Proves actionable government decision-support capability mapped directly to NASA FIRMS satellite upwind fire cluster vector alignment and official Indian GRAP regulations.
 
 #### E. Speaker Notes Script
 > *"The true impact of AeroCast NCR lies in transforming environmental governance from reactive crisis management into proactive prevention. For regulatory bodies like the CPCB, receiving an automated Stage-III GRAP warning 24 hours in advance allows authorities to enforce construction bans and truck entry restrictions BEFORE the smog ceiling collapses over Delhi. For healthcare systems, it enables hospital surge planning for respiratory admissions. And for over 30 million residents, it provides actionable early guidance to protect children and sensitive groups."*
@@ -391,8 +392,8 @@ flowchart LR
 ```
 
 #### D. Actual Proof & Screenshot Callout
-- **Screenshot to Embed**: Interactive NCR Air Quality Map (`MapPage.tsx`) displaying real-time Leaflet station pins, NASA FIRMS satellite fire hotspots, and animated HTML5 Canvas weather particle streamlines (`z-index: 500`).
-- **Proof Value**: Demonstrates the visual quality and meteorological fidelity of the live web application.
+![Slide 6 Proof — Interactive Leaflet Streamline Map](screenshots/map_page.png)
+- **Proof Value**: Demonstrates the visual quality, scientific data provenance, and open-source transparency of the live web application.
 
 #### E. Speaker Notes Script
 > *"AeroCast NCR is grounded in published atmospheric science and operational data standards. Our meteorological and chemical data streams draw directly from ECMWF ERA5, Copernicus CAMS, and NASA FIRMS active fire satellite instruments. Our architectural benchmark follows the IITM/IMD 400-meter WRF-Chem operational framework published in Scientific Reports. All code, data pipelines, model artifacts, and scientific audit reports—including our DATA_PROVENANCE_REPORT and MODEL_V2_VALIDATION_REPORT—are fully documented and open-source on our GitHub repository. We invite the judges to scan the QR code and inspect our live deployment."*
@@ -558,33 +559,34 @@ SLIDE 6: RESEARCH REFERENCES & SCIENTIFIC DATA PROVENANCE
 
 ## 7. RECOMMENDED 4 KEY SCREENSHOTS TO EMBED
 
-To visually prove your working technical implementation, embed these **4 priority screenshots** into your PowerPoint presentation:
+To visually prove your working technical implementation to SIH judges, all **7 live website screenshots** have been automatically captured and saved directly into `docs/screenshots/`:
 
-1. **Screenshot 1 — Main Overview Dashboard (`OverviewPage.tsx`)**:
-   - *Displays*: Operational status pills, CPCB AQI card, 5 pollutant metrics ($\text{PM}_{2.5}, \text{PM}_{10}, \text{NO}_2, \text{O}_3, \text{AQI}$), and interactive 72-hour mini forecast curve.
-   - *Placement*: **Slide 2 (Proposed Solution)**.
+1. **Slide 1 & Slide 4 Proof — Interactive NCR Air Quality Map (`MapPage.tsx`)**:
+   ![Interactive NCR Air Quality Map](screenshots/map_page.png)
+   - *Displays*: Leaflet CPCB station pins, NASA FIRMS satellite fire hotspots, and animated HTML5 Canvas weather particle streamlines (`z-index: 500`).
 
-2. **Screenshot 2 — Model Validation & Benchmarks (`ValidationPage.tsx`)**:
+2. **Slide 2 Proof — Main Overview Dashboard (`OverviewPage.tsx`)**:
+   ![Main Overview Dashboard](screenshots/overview_page.png)
+   - *Displays*: Live status pills, CPCB AQI card, 5 pollutant metrics ($\text{PM}_{2.5}, \text{PM}_{10}, \text{NO}_2, \text{O}_3, \text{AQI}$), and interactive 72-hour mini forecast curve.
+
+3. **Slide 3 Proof — Model Validation & Benchmarks (`ValidationPage.tsx`)**:
+   ![Model Validation Page](screenshots/validation_page.png)
    - *Displays*: Multi-horizon performance tables, baseline comparisons, and observed vs predicted test series charts.
-   - *Placement*: **Slide 3 (Technical Approach)**.
 
-3. **Screenshot 3 — Interactive NCR Air Quality Map (`MapPage.tsx`)**:
-   - *Displays*: Leaflet station pins, NASA FIRMS satellite fire hotspots, and animated HTML5 Canvas weather particle streamlines.
-   - *Placement*: **Slide 1 (Title Page)** or **Slide 4**.
+4. **Slide 4 Proof — Atmospheric Intelligence Diagnostics (`AtmospherePage.tsx`)**:
+   ![Atmospheric Intelligence Page](screenshots/atmosphere_page.png)
+   - *Displays*: Ventilation Index ($V_c = U_{10\text{m}} \times H_{\text{PBL}}$) gauge, Thermal Inversion proxy score, and meteorological driver breakdowns.
 
-4. **Screenshot 4 — Stubble Transport Risk & Alerts (`StubblePage.tsx` / `AlertsPage.tsx`)**:
-   - *Displays*: Ventilation Index ($V_c$) gauge, upwind fire cluster risk ranking, and active GRAP stage warning alerts.
-   - *Placement*: **Slide 5 (Impact & Benefits)**.
+5. **Slide 5 Proof — Stubble & Smoke Risk (`StubblePage.tsx`)**:
+   ![Stubble Transport Risk Page](screenshots/stubble_page.png)
+   - *Displays*: NASA FIRMS upwind fire cluster vector risk alignment score and regional fire cluster rankings.
 
----
+6. **Slide 5 Proof — Alerts Centre (`AlertsPage.tsx`)**:
+   ![Alerts Centre Page](screenshots/alerts_page.png)
+   - *Displays*: Active Stage III GRAP warning alerts, 24-hour ahead alerts, and dynamic CPCB sub-index status.
 
-## 8. FINAL 6-SLIDE PURE COPY-PASTE SUMMARY
-
-Below is the ultra-clean, condensed version formatted for direct copy-pasting into your PowerPoint text boxes:
-
----
-
-### SLIDE 1: TITLE PAGE
+7. **Slide 1 Proof — 72-Hour Detailed Forecast (`ForecastPage.tsx`)**:
+   ![72-Hou### SLIDE 1: TITLE PAGE
 
 **AEROCAST NCR**  
 *Weather–Pollution Coupled Multi-Horizon Forecasting & Environmental Intelligence Platform for Greater Delhi NCR*
@@ -593,6 +595,8 @@ Below is the ultra-clean, condensed version formatted for direct copy-pasting in
 * **Theme**: Clean & Green Technology | **Category**: Software Prototype
 * **Team**: [Team Name] (ID: [Team ID])
 * **Tagline**: *"From Reaction to Anticipation: 72-Hour AI Pollution Intelligence"*
+
+![Slide 1 Proof — Interactive NCR Air Quality Map](screenshots/map_page.png)
 
 ---
 
@@ -607,6 +611,8 @@ Below is the ultra-clean, condensed version formatted for direct copy-pasting in
 4. **WHAT NEXT? (Automated Alerts)**: Dynamic CPCB sub-index warning matrix triggering GRAP Stage I–IV alerts 24h in advance.
 
 *Core Operational Story*: `FORECAST ➔ EXPLAIN ➔ TRACE ➔ ALERT`
+
+![Slide 2 Proof — Main Overview Dashboard](screenshots/overview_page.png)
 
 ---
 
@@ -625,6 +631,8 @@ Below is the ultra-clean, condensed version formatted for direct copy-pasting in
 | **+24h (Winter)**| **XGBoost Winter Model** | **26.61** | **35.72** | **0.4337** | Strong predictive skill during smog season |
 | **+24h (Severe)**| **XGBClassifier (Class-Wtd)**| -- | -- | **42.1% Recall**| Catches 16/38 Severe breaches ($>250 \mu\text{g/m}^3$)|
 
+![Slide 3 Proof — Model Validation & Benchmarks](screenshots/validation_page.png)
+
 ---
 
 ### SLIDE 4: FEASIBILITY, RISK MITIGATION & OPERATIONAL EVOLUTION
@@ -642,6 +650,8 @@ Below is the ultra-clean, condensed version formatted for direct copy-pasting in
 **3-Phase Evolution Roadmap**:  
 `Phase 1: ML & Physics Proxies (Today) ➔ Phase 2: Live CPCB & IMD GFS (6 Mos) ➔ Phase 3: WRF-Chem 3D HPC (12 Mos)`
 
+![Slide 4 Proof — Atmospheric Intelligence Diagnostics](screenshots/atmosphere_page.png)
+
 ---
 
 ### SLIDE 5: TARGET STAKEHOLDERS & DECISION-SUPPORT IMPACT
@@ -653,7 +663,10 @@ Below is the ultra-clean, condensed version formatted for direct copy-pasting in
 4. **Citizens & Vulnerable Groups**: Timely outdoor activity advisories for 30M+ NCR residents.
 
 **Decision-Support Impact Chain**:  
-`MULTI-SOURCE DATA ➔ 72h FORECAST & DISPERSION PROXIES ➔ 24h EARLY WARNING ALERTS ➔ PROACTIVE GRAP INTERVENTION ➔ PREVENTED SMOG EXPOSURE`
+`MULTI-SOURCE DATA ➔ 72h AI FORECAST & DISPERSION PROXIES ➔ 24h EARLY WARNING ALERTS ➔ PROACTIVE GRAP INTERVENTION ➔ PREVENTED SMOG EXPOSURE`
+
+![Slide 5 Proof — Stubble Transport Risk Scorecard](screenshots/stubble_page.png)
+![Slide 5 Proof — CPCB Alerts Centre](screenshots/alerts_page.png)
 
 ---
 
@@ -664,6 +677,13 @@ Below is the ultra-clean, condensed version formatted for direct copy-pasting in
 2. **ECMWF ERA5 Reanalysis**: Hersbach et al. (2020), *The ERA5 global reanalysis*, Q.J.R. Meteorol. Soc.
 3. **NASA FIRMS Active Fires**: VIIRS 375m & MODIS Fire Radiative Power. `https://firms.modaps.eosdis.nasa.gov/`
 4. **IITM / IMD WRF-Chem Benchmark**: Ghude et al. (2021), *High-resolution air quality forecasting for Delhi*, Sci. Rep. 11, 22097.
+5. **CPCB NAQI Standard**: Central Pollution Control Board (2014), *National Air Quality Index Report*.
+
+**Project Governance Reports**: `DATA_PROVENANCE_REPORT.md` | `MODEL_V2_VALIDATION_REPORT.md` | `SCIENTIFIC_LIMITATIONS.md` | `WRF_CHEM_INTEGRATION_SPEC.md`
+
+**GitHub Repository**: `https://github.com/CodesByY22/AeroCast-NCR`
+
+![Slide 6 Proof — Interactive NCR Streamline Map](screenshots/map_page.png)i*, Sci. Rep. 11, 22097.
 5. **CPCB NAQI Standard**: Central Pollution Control Board (2014), *National Air Quality Index Report*.
 
 **Project Governance Reports**: `DATA_PROVENANCE_REPORT.md` | `MODEL_V2_VALIDATION_REPORT.md` | `SCIENTIFIC_LIMITATIONS.md` | `WRF_CHEM_INTEGRATION_SPEC.md`
