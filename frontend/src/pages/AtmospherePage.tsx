@@ -48,9 +48,9 @@ export default function AtmospherePage({ diagnostics, loading }: Props) {
           <p className="text-xs text-slate-500 mt-1">Meteorological and boundary-layer conditions influencing pollution dispersion</p>
         </div>
 
-        <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[#0f172a] text-white text-xs font-bold w-fit shadow-xs">
-          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span>Stable / Inversion</span>
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold w-fit shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span>Stable / Inversion Regime</span>
         </div>
       </div>
 
