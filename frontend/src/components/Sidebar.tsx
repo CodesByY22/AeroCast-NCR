@@ -1,40 +1,54 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, Map, TrendingUp, Wind, Flame, Cpu, Bell, CheckCircle2, FileText, Shield
-} from 'lucide-react'
+  Squares2X2Icon,
+  MapIcon,
+  ChartBarIcon,
+  CloudIcon,
+  FireIcon,
+  CpuChipIcon,
+  ExclamationTriangleIcon,
+  BeakerIcon,
+  DocumentTextIcon,
+  ShieldCheckIcon
+} from '@heroicons/react/24/outline'
 
 const monitorItems = [
-  { path: '/', label: 'Overview', icon: LayoutDashboard },
-  { path: '/map', label: 'AQI Map', icon: Map },
-  { path: '/forecast', label: '72h Forecast', icon: TrendingUp },
-  { path: '/atmosphere', label: 'Atmosphere', icon: Wind },
-  { path: '/stubble', label: 'Fire & Plume', icon: Flame },
-  { path: '/explainability', label: 'Intelligence', icon: Cpu },
-  { path: '/alerts', label: 'Early Warning', icon: Bell }
+  { path: '/', label: 'Overview', icon: Squares2X2Icon },
+  { path: '/map', label: 'AQI Map', icon: MapIcon },
+  { path: '/forecast', label: '72h Forecast', icon: ChartBarIcon },
+  { path: '/atmosphere', label: 'Atmosphere', icon: CloudIcon },
+  { path: '/stubble', label: 'Fire & Plume', icon: FireIcon },
+  { path: '/explainability', label: 'Intelligence', icon: CpuChipIcon },
+  { path: '/alerts', label: 'Early Warning', icon: ExclamationTriangleIcon }
 ]
 
 const analysisItems = [
-  { path: '/validation', label: 'Model Validation', icon: CheckCircle2 },
-  { path: '/terms', label: 'Terms of Service', icon: FileText },
-  { path: '/privacy', label: 'Privacy Policy', icon: Shield }
+  { path: '/validation', label: 'Model Validation', icon: BeakerIcon },
+  { path: '/terms', label: 'Terms of Service', icon: DocumentTextIcon },
+  { path: '/privacy', label: 'Privacy Policy', icon: ShieldCheckIcon }
 ]
 
 export default function Sidebar() {
   return (
-    <aside className="w-60 bg-white border-r border-[#d2d2d7] flex flex-col justify-between shrink-0 h-screen sticky top-0 z-20 select-none">
-      <div className="overflow-y-auto">
-        {/* Brand */}
-        <div className="px-5 py-5 border-b border-[#e8e8ed]">
-          <h1 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f] leading-none">AeroCast-NCR</h1>
-          <p className="text-[11px] text-[#86868b] mt-1">Air Pollution Intelligence</p>
+    <aside className="w-64 bg-surface flex flex-col shrink-0 h-screen sticky top-0 z-20 border-r border-borderSubtle">
+      {/* Brand */}
+      <div className="px-6 py-6 flex items-center gap-3">
+        <div className="w-8 h-8 bg-textMain rounded-lg flex items-center justify-center text-surface font-semibold">
+          A
         </div>
+        <div>
+          <h1 className="text-[14px] font-medium tracking-tight text-textMain leading-none">AeroCast-NCR</h1>
+          <p className="text-[11px] text-textMuted mt-1">Air Pollution Intelligence</p>
+        </div>
+      </div>
 
+      <div className="overflow-y-auto px-4 mt-2">
         {/* Monitor */}
-        <div className="px-3 pt-4 pb-2">
-          <div className="px-3 pb-2 text-[10px] font-semibold text-[#86868b] uppercase tracking-widest">
+        <div className="pb-6">
+          <div className="px-2 pb-3 text-[10px] font-medium text-textMuted uppercase tracking-widest">
             Monitor
           </div>
-          <nav className="space-y-0.5">
+          <nav className="space-y-1">
             {monitorItems.map(item => {
               const Icon = item.icon
               return (
@@ -43,10 +57,10 @@ export default function Sidebar() {
                   to={item.path}
                   end={item.path === '/'}
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors ${
+                    `flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
                       isActive
-                        ? 'bg-[#e8e8ed] text-[#1d1d1f] font-semibold'
-                        : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
+                        ? 'border border-textMain bg-[#f4f4f5] text-textMain font-medium shadow-[0_1px_2px_rgba(0,0,0,0.02)]'
+                        : 'border border-transparent text-textMuted hover:text-textMain'
                     }`
                   }
                 >
@@ -59,11 +73,11 @@ export default function Sidebar() {
         </div>
 
         {/* Analysis */}
-        <div className="px-3 pt-2 pb-2 border-t border-[#e8e8ed] mt-1">
-          <div className="px-3 pt-3 pb-2 text-[10px] font-semibold text-[#86868b] uppercase tracking-widest">
+        <div className="pb-6">
+          <div className="px-2 pb-3 text-[10px] font-medium text-textMuted uppercase tracking-widest">
             Analysis
           </div>
-          <nav className="space-y-0.5">
+          <nav className="space-y-1">
             {analysisItems.map(item => {
               const Icon = item.icon
               return (
@@ -71,10 +85,10 @@ export default function Sidebar() {
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors ${
+                    `flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
                       isActive
-                        ? 'bg-[#e8e8ed] text-[#1d1d1f] font-semibold'
-                        : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
+                        ? 'border border-textMain bg-[#f4f4f5] text-textMain font-medium shadow-[0_1px_2px_rgba(0,0,0,0.02)]'
+                        : 'border border-transparent text-textMuted hover:text-textMain'
                     }`
                   }
                 >
@@ -85,12 +99,6 @@ export default function Sidebar() {
             })}
           </nav>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="px-5 py-4 border-t border-[#e8e8ed] text-[11px] text-[#86868b] space-y-0.5">
-        <div className="font-medium text-[#6e6e73]">SIH26082 · MoES / NCMRWF</div>
-        <div>Delhi NCR Air Quality Forecasting</div>
       </div>
     </aside>
   )

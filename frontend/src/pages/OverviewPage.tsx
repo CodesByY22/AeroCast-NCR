@@ -1,8 +1,12 @@
-import { useState } from 'react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { Wind, Thermometer, Droplets, ArrowUpRight, AlertTriangle } from 'lucide-react'
+import {
+  WindIcon,
+  MapIcon,
+  ExclamationTriangleIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline'
 import { ForecastData, DiagnosticData, StubbleRiskData } from '../api/client'
 import { getBadgeStyle } from '../utils/colors'
 
@@ -14,13 +18,11 @@ interface Props {
 }
 
 export default function OverviewPage({ forecast, diagnostics, risk, loading }: Props) {
-  const [selectedPollutant, setSelectedPollutant] = useState<'aqi' | 'pm25' | 'pm10' | 'o3' | 'no2'>('aqi')
-
   if (loading && !forecast) {
     return (
-      <div className="p-8 space-y-6 animate-pulse max-w-7xl mx-auto">
-        <div className="h-40 bg-[#e8e8ed] rounded-xl"></div>
-        <div className="h-64 bg-[#e8e8ed] rounded-xl"></div>
+      <div className="p-10 max-w-6xl mx-auto space-y-12 animate-pulse">
+        <div className="h-10 w-1/3 bg-borderSubtle rounded"></div>
+        <div className="h-32 bg-borderSubtle rounded"></div>
       </div>
     )
   }
@@ -30,149 +32,181 @@ export default function OverviewPage({ forecast, diagnostics, risk, loading }: P
   const drivers = diagnostics?.meteorological_drivers
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Page heading */}
+    <div className="p-10 max-w-6xl mx-auto space-y-12 pb-24">
+      {/* Page Title */}
       <div>
-        <h1 className="text-[22px] font-semibold tracking-tight text-[#1d1d1f]">
+        <h1 className="text-[28px] font-light tracking-tight text-textMain">
           Air Quality Command Center
         </h1>
-        <p className="text-[13px] text-[#86868b] mt-0.5">
-          Delhi NCR · Real-time atmospheric intelligence
+        <p className="text-[13px] text-textMuted mt-1">
+          Delhi NCR • Real-time atmospheric intelligence
         </p>
       </div>
 
-      {/* Top row: AQI + Pollutants + Atmospheric */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Current AQI */}
-        <div className="lg:col-span-4 bg-white border border-[#d2d2d7] rounded-xl p-6 flex flex-col justify-between gap-4">
+      {/* Top Metrics Row (No cards, just pure whitespace layout) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        {/* AQI */}
+        <div className="lg:col-span-3 space-y-3">
+          <span className="text-[10px] font-medium tracking-[0.1em] text-textMuted uppercase block">
+            Current Air Quality
+          </span>
           <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#86868b]">Current Air Quality</span>
-            <div className="flex items-baseline gap-3 mt-2">
-              <span className="text-[48px] font-semibold tracking-tight text-[#1d1d1f] leading-none">
-                {currentItem?.aqi ?? 312}
-              </span>
-              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md" style={getBadgeStyle(currentItem?.color)}>
+            <div className="text-[64px] font-light tracking-tighter text-textMain leading-none">
+              {currentItem?.aqi ?? 312}
+            </div>
+            <div className="mt-4">
+              <span className="text-[11px] font-medium px-3 py-1 rounded bg-[#fef2f2] text-[#b91c1c]">
                 {currentItem?.category ?? 'Severe'}
               </span>
             </div>
           </div>
-          <div className="text-[11px] text-[#86868b]">
-            Updated {currentItem?.timestamp ?? 'Recently'}
+          <div className="text-[11px] text-textMuted pt-6">
+            Updated {currentItem?.timestamp ?? '12:24 PM'}
+          </div>
+        </div>
+
+        {/* Gauge Icon (decorative as in screenshot) */}
+        <div className="hidden lg:flex lg:col-span-1 items-center justify-center pt-8">
+          <div className="w-12 h-12 rounded-full border border-borderSubtle flex items-center justify-center">
+            <svg className="w-6 h-6 text-textMuted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
         </div>
 
         {/* Pollutants */}
-        <div className="lg:col-span-5 bg-white border border-[#d2d2d7] rounded-xl p-6">
-          <span className="text-[13px] font-semibold text-[#1d1d1f]">Pollutants</span>
-          <div className="grid grid-cols-2 gap-5 mt-4">
+        <div className="lg:col-span-4 space-y-6 pt-1">
+          <span className="text-[14px] text-textMain block">Pollutants</span>
+          <div className="grid grid-cols-2 gap-y-8 gap-x-4">
             <div>
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase">PM2.5</span>
-              <div className="text-[24px] font-semibold text-[#1d1d1f] leading-tight">{currentItem?.pm25 ?? 184} <span className="text-[12px] font-normal text-[#86868b]">µg/m³</span></div>
+              <span className="text-[11px] text-textMuted block mb-1">PM2.5</span>
+              <div className="text-[28px] font-light text-textMain leading-none">
+                {currentItem?.pm25 ?? 184}
+              </div>
+              <span className="text-[11px] text-textMuted mt-1 block">µg/m³</span>
             </div>
             <div>
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase">PM10</span>
-              <div className="text-[24px] font-semibold text-[#1d1d1f] leading-tight">{currentItem?.pm10 ?? 318} <span className="text-[12px] font-normal text-[#86868b]">µg/m³</span></div>
+              <span className="text-[11px] text-textMuted block mb-1">PM10</span>
+              <div className="text-[28px] font-light text-textMain leading-none">
+                {currentItem?.pm10 ?? 318}
+              </div>
+              <span className="text-[11px] text-textMuted mt-1 block">µg/m³</span>
             </div>
             <div>
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase">O₃</span>
-              <div className="text-[24px] font-semibold text-[#1d1d1f] leading-tight">{currentItem?.o3 ?? 72} <span className="text-[12px] font-normal text-[#86868b]">µg/m³</span></div>
+              <span className="text-[11px] text-textMuted block mb-1">O₃</span>
+              <div className="text-[28px] font-light text-textMain leading-none">
+                {currentItem?.o3 ?? 72}
+              </div>
+              <span className="text-[11px] text-textMuted mt-1 block">µg/m³</span>
             </div>
             <div>
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase">NOx</span>
-              <div className="text-[24px] font-semibold text-[#1d1d1f] leading-tight">{currentItem?.no2 ?? 91} <span className="text-[12px] font-normal text-[#86868b]">µg/m³</span></div>
+              <span className="text-[11px] text-textMuted block mb-1">NOx</span>
+              <div className="text-[28px] font-light text-textMain leading-none">
+                {currentItem?.no2 ?? 91}
+              </div>
+              <span className="text-[11px] text-textMuted mt-1 block">µg/m³</span>
             </div>
           </div>
         </div>
 
-        {/* Atmospheric Conditions */}
-        <div className="lg:col-span-3 bg-white border border-[#d2d2d7] rounded-xl p-6">
-          <span className="text-[13px] font-semibold text-[#1d1d1f]">Atmospheric Conditions</span>
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div>
-              <div className="flex items-center gap-1 text-[10px] text-[#86868b] font-medium">
-                <Wind className="w-3 h-3" strokeWidth={1.5} />
-                <span>Wind</span>
+        {/* Atmospheric */}
+        <div className="lg:col-span-4 space-y-6 pt-1">
+          <span className="text-[14px] text-textMain block">Atmospheric Conditions</span>
+          <div className="grid grid-cols-2 gap-y-6 gap-x-2 text-[12px] text-textMain">
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-[#f4f4f5] rounded text-textMuted">
+                <WindIcon className="w-4 h-4" strokeWidth={1.5} />
               </div>
-              <div className="text-[13px] font-semibold text-[#1d1d1f] mt-0.5">{drivers?.wind_speed_10m.value ?? 1.4} m/s NW</div>
+              <div>
+                <span className="text-[10px] text-textMuted block">Wind</span>
+                <span>{drivers?.wind_speed_10m.value ?? 1.4} m/s NW</span>
+              </div>
             </div>
-            <div>
-              <div className="flex items-center gap-1 text-[10px] text-[#86868b] font-medium">
-                <Thermometer className="w-3 h-3" strokeWidth={1.5} />
-                <span>Temp</span>
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-[#f4f4f5] rounded text-textMuted">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
               </div>
-              <div className="text-[13px] font-semibold text-[#1d1d1f] mt-0.5">{drivers?.temperature_2m.value ?? 18.4}°C</div>
+              <div>
+                <span className="text-[10px] text-textMuted block">Temperature</span>
+                <span>{drivers?.temperature_2m.value ?? 18.4}°C</span>
+              </div>
             </div>
-            <div>
-              <div className="flex items-center gap-1 text-[10px] text-[#86868b] font-medium">
-                <Droplets className="w-3 h-3" strokeWidth={1.5} />
-                <span>Humidity</span>
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-[#f4f4f5] rounded text-textMuted">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
               </div>
-              <div className="text-[13px] font-semibold text-[#1d1d1f] mt-0.5">{drivers?.relative_humidity.value ?? 78}%</div>
+              <div>
+                <span className="text-[10px] text-textMuted block">Humidity</span>
+                <span>{drivers?.relative_humidity.value ?? 78}%</span>
+              </div>
             </div>
-            <div>
-              <div className="flex items-center gap-1 text-[10px] text-[#86868b] font-medium">
-                <ArrowUpRight className="w-3 h-3" strokeWidth={1.5} />
-                <span>PBL Height</span>
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-[#f4f4f5] rounded text-textMuted">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </div>
-              <div className="text-[13px] font-semibold text-[#1d1d1f] mt-0.5">{drivers?.pbl_height_proxy.value ?? 285} m</div>
+              <div>
+                <span className="text-[10px] text-textMuted block">PBL Height</span>
+                <span>{drivers?.pbl_height_proxy.value ?? 285} m</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom row: chart + early warning */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Forecast chart */}
-        <div className="lg:col-span-8 bg-white border border-[#d2d2d7] rounded-xl p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-[15px] font-semibold text-[#1d1d1f]">72-Hour AQI Forecast</h2>
-              <span className="text-[11px] text-[#86868b]">Hourly forecast trajectory</span>
-            </div>
+      <hr className="border-borderSubtle" />
 
-            <div className="flex gap-0.5 bg-[#f5f5f7] p-0.5 rounded-lg border border-[#e8e8ed]">
-              {(['aqi', 'pm25', 'pm10', 'o3', 'no2'] as const).map(param => (
-                <button
-                  key={param}
-                  onClick={() => setSelectedPollutant(param)}
-                  className={`text-[11px] px-3 py-1 rounded-md font-medium uppercase transition-colors ${
-                    selectedPollutant === param ? 'bg-white text-[#1d1d1f] border border-[#d2d2d7] shadow-sm' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
-                  }`}
-                >
-                  {param}
-                </button>
-              ))}
+      {/* Bottom Section: Chart & Warning */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start pt-4">
+        
+        {/* Forecast Chart */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="flex justify-between items-baseline">
+            <h2 className="text-[14px] text-textMain">72-Hour AQI Forecast</h2>
+            <div className="text-[10px] text-textMuted flex gap-4">
+              <span>Hourly forecast</span>
             </div>
           </div>
 
-          <div className="flex items-baseline gap-6 pt-1">
+          <div className="flex items-baseline justify-between">
             <div>
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase block">Expected Peak</span>
-              <div className="text-[24px] font-semibold text-[#1d1d1f]">{h24Item?.aqi ?? 356} AQI</div>
-              <span className="text-[10px] text-[#86868b]">in approximately 24 hours</span>
+              <span className="text-[10px] font-medium tracking-[0.1em] text-textMuted uppercase block mb-1">
+                Expected Peak
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-[32px] font-light text-textMain leading-none">{h24Item?.aqi ?? 356}</span>
+                <span className="text-[16px] text-textMain">AQI</span>
+              </div>
+              <span className="text-[10px] text-textMuted block mt-1">in approximately 24 hours</span>
             </div>
-            <div className="pl-6 border-l border-[#e8e8ed]">
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase block">Confidence</span>
-              <div className="text-[24px] font-semibold text-[#1d1d1f]">87%</div>
+            <div className="text-right">
+              <span className="text-[10px] font-medium tracking-[0.1em] text-textMuted uppercase block mb-1">
+                Confidence
+              </span>
+              <span className="text-[24px] font-light text-textMain leading-none">87%</span>
             </div>
           </div>
 
-          {/* Chart */}
-          <div className="h-64 w-full pt-2">
+          <div className="h-56 w-full relative">
             {forecast && (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={forecast.forecast_timeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={forecast.forecast_timeline} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0066cc" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#0066cc" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#2b6cb0" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#2b6cb0" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e8e8ed" vertical={false} />
-                  <XAxis dataKey="horizon" stroke="#86868b" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis stroke="#86868b" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#d2d2d7', borderRadius: '8px', fontSize: '12px', color: '#1d1d1f', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-                  <Area type="monotone" dataKey={selectedPollutant} stroke="#0066cc" strokeWidth={2} fillOpacity={1} fill="url(#colorArea)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="horizon" stroke="var(--text-muted)" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} hide />
+                  <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} domain={[250, 450]} />
+                  <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: 'var(--border-subtle)', borderRadius: '4px', fontSize: '12px', color: 'var(--text-main)', outline: 'none' }} />
+                  <Area type="monotone" dataKey="aqi" stroke="#2b6cb0" strokeWidth={1.5} fillOpacity={1} fill="url(#colorArea)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -180,25 +214,38 @@ export default function OverviewPage({ forecast, diagnostics, risk, loading }: P
         </div>
 
         {/* Early Warning */}
-        <div className="lg:col-span-4 bg-white border border-[#d2d2d7] rounded-xl p-6 flex flex-col justify-between gap-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-1.5 text-[#b25000] bg-[#fff8f0] border border-[#ffddb5] px-3 py-1.5 rounded-lg w-fit text-[11px] font-semibold">
-              <AlertTriangle className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>EARLY WARNING</span>
+        <div className="lg:col-span-4 space-y-6 pl-4 lg:border-l lg:border-borderSubtle lg:pl-12 lg:min-h-[400px]">
+          <div className="flex gap-4 items-start pt-2">
+            <div className="p-2 bg-[#fffbeb] rounded-lg">
+              <ExclamationTriangleIcon className="w-5 h-5 text-[#d97706]" strokeWidth={1.5} />
             </div>
-
-            <h3 className="text-[15px] font-semibold text-[#1d1d1f] leading-snug">
-              Severe pollution episode likely
-            </h3>
-
-            <p className="text-[13px] text-[#6e6e73] leading-relaxed">
-              Forecast models indicate a high probability of sustained severe pollution across Delhi NCR driven by nocturnal boundary layer compression.
-            </p>
+            <div>
+              <span className="text-[10px] font-medium tracking-[0.1em] text-textMuted uppercase block mb-1">
+                Early Warning
+              </span>
+              <h3 className="text-[14px] text-textMain leading-snug">
+                Severe pollution episode likely
+              </h3>
+            </div>
           </div>
+          
+          <p className="text-[12px] text-textMuted leading-relaxed">
+            Forecast models indicate a high probability of sustained severe pollution across Delhi NCR.
+          </p>
 
-          <div className="pt-4 border-t border-[#e8e8ed] flex items-center justify-between text-[12px] text-[#6e6e73] font-medium">
-            <span>Peak in 24h</span>
-            <span>Stubble Risk: {risk?.transport_risk.stubble_transport_risk_score ?? 68}/100</span>
+          <hr className="border-borderSubtle" />
+
+          <div className="flex items-center gap-6 text-[11px] text-textMuted">
+            <div className="flex items-center gap-1.5">
+              <ClockIcon className="w-3.5 h-3.5" strokeWidth={1.5} />
+              Peak in 24h
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Probability 82%
+            </div>
           </div>
         </div>
       </div>

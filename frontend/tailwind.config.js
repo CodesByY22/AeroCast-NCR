@@ -7,27 +7,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        page: '#f5f5f7',
+        page: '#fafafa',
         surface: '#ffffff',
-        accent: '#0066cc',
+        accent: '#2b6cb0',
+        textMain: '#1a1a1a',
+        textMuted: '#71717a',
+        borderSubtle: '#e4e4e7',
         aqi: {
-          good: "#00E400",
-          satisfactory: "#9CFF00",
-          moderate: "#FFFF00",
-          poor: "#FF7E00",
-          verypoor: "#FF0000",
-          severe: "#99004C",
-          hazard: "#7E0023"
+          good: "#22c55e",
+          satisfactory: "#84cc16",
+          moderate: "#eab308",
+          poor: "#f97316",
+          verypoor: "#ef4444",
+          severe: "#b91c1c",
+          hazard: "#7f1d1d"
         }
       },
-      borderRadius: {
-        card: '12px',
-        control: '8px',
-      },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-        mono: ['SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace'],
-      },
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Helvetica Neue"',
+          'Helvetica',
+          'Arial',
+          'sans-serif'
+        ],
+        mono: [
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          'monospace'
+        ]
+      }
     },
   },
   plugins: [],
