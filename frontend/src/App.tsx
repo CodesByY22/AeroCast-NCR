@@ -58,20 +58,16 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-100 selection:text-[#0066cc]">
-        {/* Persistent Left Sidebar Navigation */}
+      <div className="flex min-h-screen bg-[#f5f5f7] text-[#1d1d1f]">
         <Sidebar />
 
-        {/* Main Content Body */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top Header Bar */}
           <Header
             onRefresh={loadAllData}
             loading={loading}
             onOpenWrfModal={() => setShowWrfModal(true)}
           />
 
-          {/* Client-side Router Views */}
           <main className="flex-1 overflow-y-auto">
             <Routes>
               <Route path="/" element={<OverviewPage forecast={forecast} diagnostics={diagnostics} risk={risk} loading={loading} />} />
@@ -87,43 +83,40 @@ export default function App() {
             </Routes>
           </main>
 
-          {/* Clean Footer */}
-          <footer className="border-t border-[#e5e5ea] py-5 px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#6e6e73] bg-white shrink-0 font-sans gap-2">
-            <div>
-              <span>AeroCast NCR — Air Pollution–Weather Intelligence System | <strong>SIH26082</strong></span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/terms" className="hover:text-[#1d1d1f] underline transition">Terms of Service</Link>
-              <Link to="/privacy" className="hover:text-[#1d1d1f] underline transition">Privacy Policy</Link>
-              <a href="https://github.com/CodesByY22/AeroCast-NCR" target="_blank" rel="noreferrer" className="hover:text-[#1d1d1f] underline transition">GitHub Repository</a>
+          <footer className="border-t border-[#d2d2d7] py-4 px-8 flex flex-col sm:flex-row items-center justify-between text-[12px] text-[#86868b] bg-white shrink-0 gap-2">
+            <span>AeroCast NCR · Air Pollution-Weather Intelligence System · <strong className="text-[#6e6e73]">SIH26082</strong></span>
+            <div className="flex items-center gap-4">
+              <Link to="/terms" className="hover:text-[#1d1d1f] transition-colors">Terms of Service</Link>
+              <Link to="/privacy" className="hover:text-[#1d1d1f] transition-colors">Privacy Policy</Link>
+              <a href="https://github.com/CodesByY22/AeroCast-NCR" target="_blank" rel="noreferrer" className="hover:text-[#1d1d1f] transition-colors">GitHub</a>
             </div>
           </footer>
         </div>
 
-        {/* Persistent WRF-Chem Connector Contract Modal */}
+        {/* WRF-Chem modal */}
         {showWrfModal && wrfStub && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white border border-[#e5e5ea] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white border border-[#d2d2d7] rounded-xl max-w-lg w-full p-6 space-y-4 shadow-lg">
               <div className="flex justify-between items-start">
-                <h3 className="text-base font-semibold text-[#1d1d1f] flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-[#0066cc]" />
-                  <span>Operational WRF-Chem Connector Contract</span>
+                <h3 className="text-[15px] font-semibold text-[#1d1d1f] flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-[#0066cc]" strokeWidth={1.5} />
+                  Operational WRF-Chem Connector Contract
                 </h3>
-                <button onClick={() => setShowWrfModal(false)} className="text-[#6e6e73] hover:text-[#1d1d1f] font-semibold text-sm">✕</button>
+                <button onClick={() => setShowWrfModal(false)} className="text-[#86868b] hover:text-[#1d1d1f] text-sm p-1">✕</button>
               </div>
-              <div className="bg-[#f5f5f7] rounded-xl p-4 font-mono text-xs text-[#1d1d1f] space-y-2 border border-[#e5e5ea]">
-                <div><span className="text-[#0066cc] font-semibold">Status:</span> {wrfStub.status}</div>
-                <div><span className="text-amber-700 font-semibold">Notice:</span> {wrfStub.notice}</div>
-                <div><span className="text-emerald-700 font-semibold">Target Resolution:</span> {wrfStub.target_resolution}</div>
-                <div><span className="text-indigo-700 font-semibold">Benchmark:</span> {wrfStub.benchmark_reference}</div>
+              <div className="bg-[#f5f5f7] rounded-lg p-4 font-mono text-[12px] text-[#1d1d1f] space-y-1.5 border border-[#e8e8ed]">
+                <div><span className="text-[#0066cc] font-medium">Status:</span> {wrfStub.status}</div>
+                <div><span className="text-[#ff9f0a] font-medium">Notice:</span> {wrfStub.notice}</div>
+                <div><span className="text-[#34c759] font-medium">Target Resolution:</span> {wrfStub.target_resolution}</div>
+                <div><span className="text-[#6e6e73] font-medium">Benchmark:</span> {wrfStub.benchmark_reference}</div>
               </div>
-              <p className="text-xs text-[#6e6e73]">
+              <p className="text-[12px] text-[#6e6e73]">
                 This research stub satisfies the hard constraint: AeroCast NCR does not fake 3D atmospheric chemistry runs, exposing a clean API contract for operational WRF-Chem HPC coupling post-MVP.
               </p>
               <div className="flex justify-end">
                 <button
                   onClick={() => setShowWrfModal(false)}
-                  className="px-4 py-2 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] border border-[#e5e5ea] rounded-xl text-xs font-semibold transition"
+                  className="px-4 py-2 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] border border-[#d2d2d7] rounded-lg text-[12px] font-medium transition-colors"
                 >
                   Close
                 </button>

@@ -260,7 +260,7 @@ export default function MapPage() {
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto font-sans">
       {/* Top Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border border-[#e5e5ea] rounded-2xl p-6 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border border-[#d2d2d7] rounded-xl p-6 ">
         <div>
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[#0066cc]">
@@ -279,7 +279,7 @@ export default function MapPage() {
 
         {/* Controls Bar */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center bg-[#f5f5f7] p-1 rounded-xl border border-[#e5e5ea] text-xs">
+          <div className="flex items-center bg-[#f5f5f7] p-1 rounded-xl border border-[#d2d2d7] text-xs">
             <span className="text-[#6e6e73] font-semibold px-2 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-[#0066cc]" /> Horizon:
             </span>
@@ -289,7 +289,7 @@ export default function MapPage() {
                 onClick={() => setSelectedHorizon(h)}
                 className={`px-2.5 py-1 rounded-lg font-medium uppercase transition ${
                   selectedHorizon === h
-                    ? 'bg-white text-[#0066cc] font-semibold border border-[#e5e5ea] shadow-xs'
+                    ? 'bg-white text-[#0066cc] font-semibold border border-[#d2d2d7] shadow-sm'
                     : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
@@ -298,14 +298,14 @@ export default function MapPage() {
             ))}
           </div>
 
-          <div className="flex items-center bg-[#f5f5f7] p-1 rounded-xl border border-[#e5e5ea] text-xs">
+          <div className="flex items-center bg-[#f5f5f7] p-1 rounded-xl border border-[#d2d2d7] text-xs">
             {(['aqi', 'pm25', 'pm10', 'no2', 'o3'] as const).map(param => (
               <button
                 key={param}
                 onClick={() => setSelectedFilter(param)}
                 className={`px-2.5 py-1 rounded-lg font-medium uppercase transition ${
                   selectedFilter === param
-                    ? 'bg-white text-[#0066cc] font-semibold border border-[#e5e5ea] shadow-xs'
+                    ? 'bg-white text-[#0066cc] font-semibold border border-[#d2d2d7] shadow-sm'
                     : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
@@ -316,7 +316,7 @@ export default function MapPage() {
 
           <button
             onClick={handleResetView}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] text-xs font-medium transition border border-[#e5e5ea] shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] text-xs font-medium transition border border-[#d2d2d7] shadow-sm"
           >
             <RefreshCw className="w-3.5 h-3.5 text-[#0066cc]" />
             <span>Reset NCR View</span>
@@ -325,7 +325,7 @@ export default function MapPage() {
       </div>
 
       {/* Scientific Integrity Banner */}
-      <div className="p-4 bg-white border border-[#e5e5ea] rounded-2xl text-xs text-[#424245] leading-relaxed flex items-start gap-3 shadow-sm">
+      <div className="p-4 bg-white border border-[#d2d2d7] rounded-xl text-xs text-[#424245] leading-relaxed flex items-start gap-3 ">
         <Info className="w-4 h-4 text-[#0066cc] shrink-0 mt-0.5" />
         <div>
           <strong className="text-[#1d1d1f] font-semibold block text-xs mb-0.5">Scientific Provenance Notice:</strong>
@@ -338,7 +338,7 @@ export default function MapPage() {
       {/* Main Grid: Interactive Map + Side Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Real Geographic Map Canvas */}
-        <div className="lg:col-span-8 bg-white border border-[#e5e5ea] rounded-2xl p-4 space-y-4 shadow-sm overflow-hidden flex flex-col">
+        <div className="lg:col-span-8 bg-white border border-[#d2d2d7] rounded-xl p-4 space-y-4  overflow-hidden flex flex-col">
           <div className="flex items-center justify-between text-xs text-[#6e6e73] px-2">
             <span className="font-semibold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-2">
               <Navigation className="w-4 h-4 text-[#0066cc]" />
@@ -349,7 +349,7 @@ export default function MapPage() {
             </span>
           </div>
 
-          <div className="h-[560px] w-full rounded-xl relative overflow-hidden border border-[#e5e5ea] shadow-inner">
+          <div className="h-[560px] w-full rounded-xl relative overflow-hidden border border-[#d2d2d7] shadow-inner">
             {loading && (
               <div className="absolute inset-0 bg-white/80 z-50 flex items-center justify-center text-xs text-[#0066cc] font-mono gap-2">
                 <RefreshCw className="w-4 h-4 animate-spin" /> Loading geospatial layers...
@@ -392,7 +392,7 @@ export default function MapPage() {
                   >
                     <Popup className="custom-leaflet-popup" closeButton={false}>
                       <div className="p-3.5 space-y-2.5 font-sans min-w-[220px]">
-                        <div className="flex items-center justify-between border-b border-[#e5e5ea] pb-2">
+                        <div className="flex items-center justify-between border-b border-[#d2d2d7] pb-2">
                           <span className="font-semibold text-sm text-[#1d1d1f] tracking-tight">{st.name}</span>
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-[#0066cc] border border-blue-200">
                             {st.city}
@@ -406,7 +406,7 @@ export default function MapPage() {
 
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-[#6e6e73] font-medium">CPCB Severity</span>
-                          <span className="font-semibold px-2.5 py-0.5 rounded-full text-[10px] shadow-xs" style={getBadgeStyle(st.color)}>
+                          <span className="font-semibold px-2.5 py-0.5 rounded-full text-[10px] shadow-sm" style={getBadgeStyle(st.color)}>
                             {st.category}
                           </span>
                         </div>
@@ -434,7 +434,7 @@ export default function MapPage() {
                 >
                   <Popup>
                     <div className="p-3.5 bg-white text-[#1d1d1f] rounded-xl space-y-1.5 text-xs font-sans min-w-[190px]">
-                      <div className="font-semibold text-sm text-[#dc2626] flex items-center gap-1.5 border-b border-[#e5e5ea] pb-1">
+                      <div className="font-semibold text-sm text-[#dc2626] flex items-center gap-1.5 border-b border-[#d2d2d7] pb-1">
                         <Flame className="w-4 h-4" /> NASA FIRMS Fire Spot
                       </div>
                       <div className="flex justify-between font-mono">
@@ -453,7 +453,7 @@ export default function MapPage() {
           </div>
 
           {/* Map Legends */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-[#6e6e73] pt-2 border-t border-[#e5e5ea]">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-[#6e6e73] pt-2 border-t border-[#d2d2d7]">
             <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-mono">
               <span className="font-semibold text-[#1d1d1f] uppercase text-[10px]">CPCB Legend:</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#00E400]"></span> Good</span>
@@ -468,7 +468,7 @@ export default function MapPage() {
 
         {/* Sidebar Controls */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white border border-[#e5e5ea] rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="bg-white border border-[#d2d2d7] rounded-xl p-5 space-y-4 ">
             <h2 className="text-sm font-semibold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#0066cc]" />
               <span>Map Layer Control</span>
@@ -478,7 +478,7 @@ export default function MapPage() {
               <button
                 onClick={() => toggleLayer('airQuality')}
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition ${
-                  layers.airQuality ? 'bg-blue-50 border-blue-200 text-[#0066cc] font-semibold' : 'bg-[#f5f5f7] border-[#e5e5ea] text-[#6e6e73]'
+                  layers.airQuality ? 'bg-blue-50 border-blue-200 text-[#0066cc] font-semibold' : 'bg-[#f5f5f7] border-[#d2d2d7] text-[#6e6e73]'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -490,7 +490,7 @@ export default function MapPage() {
               <button
                 onClick={() => toggleLayer('atmosphericFlow')}
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition ${
-                  layers.atmosphericFlow ? 'bg-blue-50 border-blue-200 text-[#0066cc] font-semibold' : 'bg-[#f5f5f7] border-[#e5e5ea] text-[#6e6e73]'
+                  layers.atmosphericFlow ? 'bg-blue-50 border-blue-200 text-[#0066cc] font-semibold' : 'bg-[#f5f5f7] border-[#d2d2d7] text-[#6e6e73]'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -502,7 +502,7 @@ export default function MapPage() {
               <button
                 onClick={() => toggleLayer('fireActivity')}
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition ${
-                  layers.fireActivity ? 'bg-rose-50 border-rose-200 text-[#dc2626] font-semibold' : 'bg-[#f5f5f7] border-[#e5e5ea] text-[#6e6e73]'
+                  layers.fireActivity ? 'bg-rose-50 border-rose-200 text-[#dc2626] font-semibold' : 'bg-[#f5f5f7] border-[#d2d2d7] text-[#6e6e73]'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -515,8 +515,8 @@ export default function MapPage() {
 
           {/* Selected Station Inspector */}
           {activeStation && (
-            <div className="bg-white border border-[#e5e5ea] rounded-2xl p-6 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-[#e5e5ea] pb-3">
+            <div className="bg-white border border-[#d2d2d7] rounded-xl p-6 space-y-4 ">
+              <div className="flex items-center justify-between border-b border-[#d2d2d7] pb-3">
                 <div>
                   <h3 className="text-base font-semibold text-[#1d1d1f]">{activeStation.name}</h3>
                   <p className="text-xs text-[#6e6e73]">
@@ -528,7 +528,7 @@ export default function MapPage() {
                 </span>
               </div>
 
-              <div className="p-4 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl text-center space-y-2">
+              <div className="p-4 bg-[#f5f5f7] border border-[#d2d2d7] rounded-xl text-center space-y-2">
                 <span className="text-xs text-[#6e6e73] font-medium uppercase tracking-wider">
                   Station AQI ({selectedHorizon})
                 </span>
@@ -543,19 +543,19 @@ export default function MapPage() {
               <div className="space-y-2 text-xs">
                 <span className="text-[#6e6e73] font-semibold uppercase tracking-wider text-[11px]">Pollutant Breakdown</span>
                 <div className="space-y-1.5 font-mono">
-                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#d2d2d7]">
                     <span className="text-[#424245]">PM2.5</span>
                     <span className="font-semibold text-[#1d1d1f]">{activeStation.pm25} µg/m³</span>
                   </div>
-                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#d2d2d7]">
                     <span className="text-[#424245]">PM10</span>
                     <span className="font-semibold text-[#1d1d1f]">{activeStation.pm10} µg/m³</span>
                   </div>
-                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#d2d2d7]">
                     <span className="text-[#424245]">NO2</span>
                     <span className="font-semibold text-[#1d1d1f]">{activeStation.no2} µg/m³</span>
                   </div>
-                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                  <div className="flex justify-between p-2.5 bg-[#f5f5f7] rounded-xl border border-[#d2d2d7]">
                     <span className="text-[#424245]">O3</span>
                     <span className="font-semibold text-[#1d1d1f]">{activeStation.o3} µg/m³</span>
                   </div>
