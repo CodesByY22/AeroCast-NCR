@@ -41,3 +41,14 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Demo Videos & Screen Recordings (Ignored from Git)
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+*.flv
+*.wmv
+docs/demo_video/
+

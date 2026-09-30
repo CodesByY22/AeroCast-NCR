@@ -1,52 +1,55 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, TrendingUp, Map, Wind, Flame, Cpu, Bell, CheckCircle2, ShieldAlert
+  LayoutDashboard, Map, TrendingUp, Wind, Flame, Cpu, Bell, CheckCircle2, FileText, Shield
 } from 'lucide-react'
 
-const navItems = [
+const monitorItems = [
   { path: '/', label: 'Overview', icon: LayoutDashboard },
-  { path: '/forecast', label: '72H Forecast', icon: TrendingUp },
-  { path: '/map', label: 'NCR Air Map', icon: Map },
-  { path: '/atmosphere', label: 'Atmospheric Intel', icon: Wind },
-  { path: '/stubble', label: 'Stubble & Smoke', icon: Flame },
-  { path: '/explainability', label: 'Explainable AI', icon: Cpu },
-  { path: '/alerts', label: 'Alerts Centre', icon: Bell },
-  { path: '/validation', label: 'Model Validation', icon: CheckCircle2 }
+  { path: '/map', label: 'AQI Map', icon: Map },
+  { path: '/forecast', label: '72h Forecast', icon: TrendingUp },
+  { path: '/atmosphere', label: 'Atmosphere', icon: Wind },
+  { path: '/stubble', label: 'Fire & Plume', icon: Flame },
+  { path: '/explainability', label: 'Intelligence', icon: Cpu },
+  { path: '/alerts', label: 'Early Warning', icon: Bell }
+]
+
+const analysisItems = [
+  { path: '/validation', label: 'Model Validation', icon: CheckCircle2 },
+  { path: '/terms', label: 'Terms of Service', icon: FileText },
+  { path: '/privacy', label: 'Privacy Policy', icon: Shield }
 ]
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-slate-900/90 border-r border-slate-800/80 flex flex-col justify-between shrink-0 h-screen sticky top-0">
-      <div>
+    <aside className="w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 h-screen sticky top-0 font-sans z-20">
+      <div className="overflow-y-auto">
         {/* Brand Section */}
-        <div className="p-5 border-b border-slate-800/80 flex items-center space-x-3">
-          <div className="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400">
-            <Wind className="w-6 h-6 animate-pulse" />
+        <div className="p-5 border-b border-slate-100 flex items-center space-x-3">
+          <div className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+            A
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-white">AeroCast NCR</h1>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                SIH
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400">Weather–Pollution Intelligence</p>
+            <h1 className="text-sm font-bold tracking-tight text-slate-900 leading-none">AeroCast-NCR</h1>
+            <p className="text-[11px] text-slate-500 mt-1">Air Pollution Intelligence</p>
           </div>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="p-3 space-y-1">
-          {navItems.map(item => {
+        {/* MONITOR Section */}
+        <div className="p-3 space-y-1">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            MONITOR
+          </div>
+          {monitorItems.map(item => {
             const Icon = item.icon
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition ${
+                  `flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'bg-white text-slate-900 font-bold border-2 border-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`
                 }
               >
@@ -55,19 +58,39 @@ export default function Sidebar() {
               </NavLink>
             )
           })}
-        </nav>
+        </div>
+
+        {/* ANALYSIS Section */}
+        <div className="p-3 space-y-1 border-t border-slate-100">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            ANALYSIS
+          </div>
+          {analysisItems.map(item => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-white text-slate-900 font-bold border-2 border-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{item.label}</span>
+              </NavLink>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Footer Info */}
-      <div className="p-4 border-t border-slate-800/80 space-y-2">
-        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-[10px] space-y-1 text-slate-400">
-          <div className="flex items-center justify-between text-slate-300 font-semibold">
-            <span>IITM/IMD Benchmark</span>
-            <ShieldAlert className="w-3 h-3 text-cyan-400" />
-          </div>
-          <p className="leading-tight">400m WRF-Chem Inspired Prototype</p>
-        </div>
-        <p className="text-[10px] text-slate-500 text-center">SIH26082 · MoES / NCMRWF</p>
+      {/* Footer info */}
+      <div className="p-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-1 bg-slate-50/50">
+        <div className="font-semibold text-slate-700">SIH26082 · MoES / NCMRWF</div>
+        <div className="text-[10px] text-slate-400">Delhi NCR Air Quality Forecasting</div>
       </div>
     </aside>
   )

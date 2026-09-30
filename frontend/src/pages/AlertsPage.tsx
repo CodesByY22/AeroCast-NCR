@@ -1,4 +1,3 @@
-import { Bell, ShieldAlert, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { AlertsHistoryData } from '../api/client'
 import { getBadgeStyle } from '../utils/colors'
 
@@ -9,81 +8,66 @@ interface Props {
 
 export default function AlertsPage({ alerts, loading }: Props) {
   if (loading && !alerts) {
-    return <div className="p-8 text-center text-slate-400">Loading dynamic CPCB alert matrix...</div>
+    return <div className="p-8 text-center text-[#6e6e73] font-sans">Loading CPCB alert matrix...</div>
   }
 
   const active = alerts?.active_alert
   const forecasts = alerts?.forecast_alerts || []
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8 font-sans max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
-        <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          <Bell className="w-6 h-6 text-amber-400" />
-          <span>Dynamic CPCB Air Quality Alert Centre</span>
-        </h2>
-        <p className="text-xs text-slate-400">Automated CPCB-compliant warning triggers based on multi-horizon model predictions.</p>
+      <div className="bg-white border border-[#e5e5ea] rounded-2xl p-6 shadow-sm">
+        <h1 className="text-xl font-semibold text-[#1d1d1f] tracking-tight">
+          Dynamic CPCB Air Quality Advisory & Alert Centre
+        </h1>
+        <p className="text-xs text-[#6e6e73] mt-1">Automated CPCB-compliant statutory warning triggers based on multi-horizon model predictions.</p>
       </div>
 
       {/* Current Active Alert Hero Banner */}
       {active && (
-        <div className="bg-slate-900/90 border-2 rounded-2xl p-6 space-y-3 shadow-xl" style={{ borderColor: active.color }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <ShieldAlert className="w-8 h-8" style={{ color: active.color }} />
-              <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Active Warning (+0h Observation)</span>
-                <h3 className="text-2xl font-black" style={{ color: active.color }}>
-                  {active.category.toUpperCase()} ALERT — AQI {active.aqi}
-                </h3>
-              </div>
+        <div className="bg-white border border-[#e5e5ea] rounded-2xl p-6 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#e5e5ea] pb-4">
+            <div>
+              <span className="text-xs text-[#6e6e73] uppercase font-semibold">Active Warning (+0h Ground AQI)</span>
+              <h2 className="text-2xl font-semibold tracking-tight" style={{ color: active.color }}>
+                {active.category.toUpperCase()} ADVISORY — AQI {active.aqi}
+              </h2>
             </div>
-            <span className="px-3 py-1 rounded-xl text-xs font-extrabold uppercase shadow-sm" style={getBadgeStyle(active.color)}>
+            <span className="px-3 py-1 rounded-md text-xs font-semibold uppercase shadow-2xs" style={getBadgeStyle(active.color)}>
               {active.alert_level}
             </span>
           </div>
 
-          <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-300 leading-relaxed font-sans">
-            <strong className="text-slate-100 block mb-1">Trigger Explanation:</strong>
+          <div className="p-4 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl text-xs text-[#424245] leading-relaxed font-sans">
+            <strong className="text-[#1d1d1f] block mb-1 font-semibold">Trigger Rationale:</strong>
             {active.explanation}
           </div>
         </div>
       )}
 
-      {/* Horizon Alert Matrix (Next 24h, 48h, 72h) */}
+      {/* Horizon Alert Matrix */}
       <div className="space-y-4">
-        <h3 className="text-md font-bold text-slate-100 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-cyan-400" />
-          <span>72-Hour Warning Forecast Timeline</span>
-        </h3>
+        <h2 className="text-base font-semibold text-[#1d1d1f]">
+          72-Hour Warning Forecast Timeline
+        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {forecasts.filter(a => ['+24h', '+48h', '+72h'].includes(a.horizon)).map(alt => (
-            <div key={alt.horizon} className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-cyan-400 uppercase">Horizon {alt.horizon}</span>
-                <span className="px-2.5 py-0.5 rounded text-xs font-extrabold shadow-sm" style={getBadgeStyle(alt.color)}>
-                  {alt.category}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {forecasts.map(f => (
+            <div key={f.horizon} className="bg-white border border-[#e5e5ea] rounded-2xl p-6 space-y-3 shadow-sm">
+              <div className="flex justify-between items-center border-b border-[#e5e5ea] pb-3">
+                <span className="text-xs font-semibold text-[#0066cc] font-mono">{f.horizon} HORIZON</span>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded shadow-2xs" style={getBadgeStyle(f.color)}>
+                  {f.category}
                 </span>
               </div>
-
-              <div className="text-3xl font-extrabold text-slate-100">
-                AQI {alt.aqi} <span className="text-xs text-slate-400 font-normal">({alt.pm25} µg/m³ PM2.5)</span>
+              <div className="text-3xl font-semibold text-[#1d1d1f]">
+                {f.aqi} <span className="text-xs font-normal text-[#86868b]">Predicted AQI</span>
               </div>
-
-              <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-300 leading-relaxed font-sans">
-                {alt.explanation}
-              </div>
+              <p className="text-xs text-[#6e6e73]">{f.explanation}</p>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Standard Reference Info */}
-      <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-400 flex items-center justify-between">
-        <span>Compliance Standard: {alerts?.standard}</span>
-        <span className="flex items-center gap-1 text-emerald-400 font-semibold"><CheckCircle2 className="w-4 h-4" /> Operational</span>
       </div>
     </div>
   )
