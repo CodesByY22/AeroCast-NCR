@@ -2,7 +2,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import {
-  WindIcon,
+  
   MapIcon,
   ExclamationTriangleIcon,
   ClockIcon
@@ -18,11 +18,19 @@ interface Props {
 }
 
 export default function OverviewPage({ forecast, diagnostics, risk, loading }: Props) {
-  if (loading && !forecast) {
+  if (!forecast) {
     return (
-      <div className="p-10 max-w-6xl mx-auto space-y-12 animate-pulse">
-        <div className="h-10 w-1/3 bg-borderSubtle rounded"></div>
-        <div className="h-32 bg-borderSubtle rounded"></div>
+      <div className="p-10 max-w-6xl mx-auto space-y-12">
+        {loading ? (
+          <div className="animate-pulse space-y-12">
+            <div className="h-10 w-1/3 bg-borderSubtle rounded"></div>
+            <div className="h-32 bg-borderSubtle rounded"></div>
+          </div>
+        ) : (
+          <div className="text-textMuted border border-borderSubtle p-6 rounded text-[13px]">
+            Cannot connect to the backend API. Please ensure the Python server is running.
+          </div>
+        )}
       </div>
     )
   }
@@ -115,7 +123,9 @@ export default function OverviewPage({ forecast, diagnostics, risk, loading }: P
           <div className="grid grid-cols-2 gap-y-6 gap-x-2 text-[12px] text-textMain">
             <div className="flex items-start gap-3">
               <div className="p-1.5 bg-[#f4f4f5] rounded text-textMuted">
-                <WindIcon className="w-4 h-4" strokeWidth={1.5} />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15h12m-12-6h18m-18 6h12" />
+                </svg>
               </div>
               <div>
                 <span className="text-[10px] text-textMuted block">Wind</span>

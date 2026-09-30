@@ -1,7 +1,15 @@
 import { FireIcon, ArrowDownIcon, MapPinIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 
 export default function StubblePage({ risk, loading }: { risk: any, loading: boolean }) {
-  if (loading && !risk) return null
+  if (!risk) {
+    return (
+      <div className="p-10 max-w-6xl mx-auto">
+        <div className="text-textMuted border border-borderSubtle p-6 rounded text-[13px]">
+          {loading ? "Loading..." : "Cannot connect to the backend API. Please ensure the Python server is running."}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-10 max-w-6xl mx-auto space-y-12 pb-24">

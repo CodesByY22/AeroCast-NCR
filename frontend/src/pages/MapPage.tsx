@@ -226,8 +226,8 @@ export default function MapPage() {
   const stations = (stationData?.stations && stationData.stations.length > 0) ? stationData.stations : FALLBACK_MAP_STATIONS.stations
   const activeStation = stations.find(s => s.id === selectedStationId) || stations[0]
 
-  const windSpd = diagnosticData?.meteorological_drivers.wind_speed_10m.value ?? 6.0
-  const windDir = diagnosticData?.meteorological_drivers.wind_direction_10m.value ?? 315
+  const windSpd = diagnosticData?.meteorological_drivers?.wind_speed_10m?.value ?? 6.0
+  const windDir = diagnosticData?.meteorological_drivers?.wind_direction_10m?.value ?? 315
 
   const toggleLayer = (layerKey: keyof typeof layers) => setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }))
 
@@ -245,7 +245,7 @@ export default function MapPage() {
           <div className="flex gap-2">
             {(['+0h', '+6h', '+12h', '+24h', '+48h', '+72h'] as const).map(h => (
               <button key={h} onClick={() => setSelectedHorizon(h)}
-                className={\`px-3 py-1 rounded text-[11px] transition-colors \${selectedHorizon === h ? 'bg-textMain text-surface font-medium' : 'text-textMuted hover:text-textMain'}\`}>
+                className={`px-3 py-1 rounded text-[11px] transition-colors ${selectedHorizon === h ? 'bg-textMain text-surface font-medium' : 'text-textMuted hover:text-textMain'}`}>
                 {h === '+0h' ? 'LIVE' : h}
               </button>
             ))}
@@ -256,7 +256,7 @@ export default function MapPage() {
           <div className="flex gap-2">
             {(['aqi', 'pm25', 'pm10', 'no2', 'o3'] as const).map(p => (
               <button key={p} onClick={() => setSelectedFilter(p)}
-                className={\`px-3 py-1 rounded text-[11px] uppercase transition-colors \${selectedFilter === p ? 'bg-textMain text-surface font-medium' : 'text-textMuted hover:text-textMain'}\`}>
+                className={`px-3 py-1 rounded text-[11px] uppercase transition-colors ${selectedFilter === p ? 'bg-textMain text-surface font-medium' : 'text-textMuted hover:text-textMain'}`}>
                 {p}
               </button>
             ))}
@@ -282,7 +282,7 @@ export default function MapPage() {
                 )
               })}
               <CanvasWindStreamlineLayer active={layers.atmosphericFlow} windSpeed={windSpd} windDirDeg={windDir} animSpeedFactor={1.0} isSmokeTransportActive={layers.smokeTransport} />
-              {layers.fireActivity && stubbleData?.active_fire_hotspots.map((fire, idx) => (
+              {layers.fireActivity && stubbleData?.active_fire_hotspots?.map((fire: any, idx: number) => (
                 <Marker key={idx} position={[fire.latitude, fire.longitude]} icon={createFireIcon(fire.frp)} />
               ))}
             </MapContainer>
@@ -296,19 +296,19 @@ export default function MapPage() {
             <span className="text-[10px] font-medium tracking-[0.1em] text-textMuted uppercase block">Map Layers</span>
             <div className="space-y-3 text-[12px] text-textMain">
               <button onClick={() => toggleLayer('airQuality')} className="flex items-center gap-3 w-full group">
-                <div className={\`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors \${layers.airQuality ? 'bg-textMain border-textMain' : 'border-borderSubtle'}\`}>
+                <div className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${layers.airQuality ? 'bg-textMain border-textMain' : 'border-borderSubtle'}`}>
                   {layers.airQuality && <CheckSquareIcon className="w-3 h-3 text-surface" strokeWidth={2} />}
                 </div>
                 <span className="group-hover:text-textMuted transition-colors">Monitoring Stations</span>
               </button>
               <button onClick={() => toggleLayer('atmosphericFlow')} className="flex items-center gap-3 w-full group">
-                <div className={\`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors \${layers.atmosphericFlow ? 'bg-textMain border-textMain' : 'border-borderSubtle'}\`}>
+                <div className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${layers.atmosphericFlow ? 'bg-textMain border-textMain' : 'border-borderSubtle'}`}>
                   {layers.atmosphericFlow && <CheckSquareIcon className="w-3 h-3 text-surface" strokeWidth={2} />}
                 </div>
                 <span className="group-hover:text-textMuted transition-colors">10m Wind Streamlines</span>
               </button>
               <button onClick={() => toggleLayer('fireActivity')} className="flex items-center gap-3 w-full group">
-                <div className={\`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors \${layers.fireActivity ? 'bg-textMain border-textMain' : 'border-borderSubtle'}\`}>
+                <div className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${layers.fireActivity ? 'bg-textMain border-textMain' : 'border-borderSubtle'}`}>
                   {layers.fireActivity && <CheckSquareIcon className="w-3 h-3 text-surface" strokeWidth={2} />}
                 </div>
                 <span className="group-hover:text-textMuted transition-colors">Satellite Fire Spots</span>

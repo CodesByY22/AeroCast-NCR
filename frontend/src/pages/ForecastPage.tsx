@@ -13,7 +13,15 @@ interface Props {
 export default function ForecastPage({ forecast, loading }: Props) {
   const [selectedPollutant, setSelectedPollutant] = useState<'aqi' | 'pm25' | 'pm10' | 'o3' | 'no2'>('aqi')
 
-  if (loading && !forecast) return null
+  if (!forecast) {
+    return (
+      <div className="p-10 max-w-6xl mx-auto">
+        <div className="text-textMuted border border-borderSubtle p-6 rounded text-[13px]">
+          {loading ? "Loading..." : "Cannot connect to the backend API. Please ensure the Python server is running."}
+        </div>
+      </div>
+    )
+  }
 
   const timeline = forecast?.forecast_timeline || []
   const current = timeline.find(i => i.horizon === '+0h') || timeline[0]

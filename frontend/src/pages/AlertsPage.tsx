@@ -2,7 +2,15 @@ import { BellIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/r
 import { getBadgeStyle } from '../utils/colors'
 
 export default function AlertsPage({ alerts, loading }: { alerts: any, loading: boolean }) {
-  if (loading && !alerts) return null
+  if (!alerts) {
+    return (
+      <div className="p-10 max-w-6xl mx-auto">
+        <div className="text-textMuted border border-borderSubtle p-6 rounded text-[13px]">
+          {loading ? "Loading..." : "Cannot connect to the backend API. Please ensure the Python server is running."}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-10 max-w-6xl mx-auto space-y-12 pb-24">

@@ -8,7 +8,15 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function ValidationPage({ validation, loading }: { validation: any, loading: boolean }) {
-  if (loading && !validation) return null
+  if (!validation) {
+    return (
+      <div className="p-10 max-w-6xl mx-auto">
+        <div className="text-textMuted border border-borderSubtle p-6 rounded text-[13px]">
+          {loading ? "Loading..." : "Cannot connect to the backend API. Please ensure the Python server is running."}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-10 max-w-6xl mx-auto space-y-12 pb-24">
